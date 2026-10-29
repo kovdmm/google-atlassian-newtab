@@ -30,6 +30,9 @@ function ticketOfText(text) {
 // …and a note that is nothing but a pull request link becomes the PR card
 const prOfText = text => !/\s/.test(text) && prRefOf(text);
 
+// …and a note that is nothing but some other link is a note without text, with that link
+const urlOfText = text => (/^https?:\/\/\S+$/i.test(text) ? text : null);
+
 // the task is already a card somewhere: show it instead of adding it twice
 function flashCard(key) {
   const el = $("bCols").querySelector(`.card[data-card="${CSS.escape(key)}"]`);
@@ -40,13 +43,15 @@ function flashCard(key) {
   el.classList.add("flash");
 }
 
-function addOwnTask(col, text) {
+async function addOwnTask(col, text) {
   text = text.trim();
   if (!text) return;
   const ref = prOfText(text), key = !ref && ticketOfText(text);
   if (ref && prCardsOnBoard().has(ref)) return flashCard(prCardId(ref));
   if (key && cardsOnBoard().has(key)) return flashCard(key);
-  const card = ref ? prCard(ref, text) : key ? jiraCard(key) : noteCard(text);
+  const url = !ref && !key && urlOfText(text);
+  const card = ref ? prCard(ref, text) : key ? jiraCard(key)
+    : url ? noteCard("", { links: [await pageLinkOf(url)] }) : noteCard(text);
   col.cards.push(card);
   update(); // the composer stays open and focused for the next task
   refreshFor(card);
@@ -54,7 +59,7 @@ function addOwnTask(col, text) {
 
 // The card's own text, edited in place: a note's text or the description of a Jira or PR card – it is only text,
 // the card stays what it is. Enter – save, Shift+Enter – new line, Esc – cancel.
-// A card left with nothing (see isEmptyCard) goes
+// A note text that is nothing but a link moves to the note's links. A card left with nothing (see isEmptyCard) goes
 function editCardText(cardEl) {
   const col = columnOf(cardEl.dataset.col), card = findCard(col, cardEl.dataset.card);
   const placeholder = card.key || card.pr ? t("boardDescPlaceholder", cardName(card)) : "";
@@ -68,12 +73,16 @@ function editCardText(cardEl) {
   input.focus();
   input.select();
   let done = false;
-  const finish = save => {
+  const finish = async save => {
     if (done) return;
     done = true;
     if (save) {
-      const text = input.value.trim();
-      if (text) card.text = text;
+      const text = input.value.trim(), isNote = !card.key && !card.pr;
+      const key = isNote && ticketOfText(text), url = isNote && !key && urlOfText(text);
+      if (key || url) {
+        delete card.text;
+        linkToCard(card, key ? { key } : await pageLinkOf(url));
+      } else if (text) card.text = text;
       else delete card.text;
       if (isEmptyCard(card)) col.cards = col.cards.filter(c => c !== card);
     }

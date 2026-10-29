@@ -156,6 +156,23 @@ async function openDocDialog({ card = null, col = null }) {
   if ($("docDlg").open && ($("docInput").value.trim() || col)) renderDocList();
 }
 
+// A link typed outside the dialog (in a note): the page with its title from the history, or from its address
+async function pageLinkOf(url) {
+  const found = await chrome.history.search({ text: url, maxResults: 20, startTime: 0 });
+  const h = found.find(x => linkRef(x.url) === linkRef(url));
+  return { title: pageTitle(h?.title, url), url };
+}
+
+// The link goes to the card's links, once; what the board doesn't know about it yet is loaded
+function linkToCard(card, link) {
+  const ref = l => l.key || linkRef(l.url);
+  card.links ??= [];
+  if (card.links.some(l => ref(l) === ref(link))) return;
+  card.links.push(link);
+  if (link.key && !issueOf(link.key)) refreshCardStatuses();
+  if (link.url && prRefOf(link.url)) refreshPrCards();
+}
+
 // "+ Link": the picked link as a new card at the end of the column
 function addLinkCard(row) {
   const { key, url, title } = row.dataset, ref = !key && prRefOf(url);
@@ -181,14 +198,7 @@ $("docList").addEventListener("click", e => {
     renderDocList();
     return $("docInput").focus();
   }
-  docCard.links ??= [];
-  if (row.dataset.key) {
-    docCard.links.push({ key: row.dataset.key });
-    if (!issueOf(row.dataset.key)) refreshCardStatuses();
-  } else {
-    docCard.links.push({ title: row.dataset.title, url: row.dataset.url });
-    if (prRefOf(row.dataset.url)) refreshPrCards();
-  }
+  linkToCard(docCard, row.dataset.key ? { key: row.dataset.key } : { title: row.dataset.title, url: row.dataset.url });
   update();
   $("docInput").value = "";
   renderDocList();
