@@ -184,6 +184,32 @@ let dragCard = null;   // { id, from } while a card is dragged, { inbox } for a 
 let dragColumn = null; // column id while a column is dragged by its header
 const placeholder = Object.assign(document.createElement("div"), { className: "card-ph" });
 
+// The dragged card follows the pointer as itself, not as Chrome's faded drag image: the native image is swapped
+// for an empty one, and a copy of the card moves with the pointer (dragover anywhere on the page reports where it is)
+const EMPTY_DRAG_IMAGE = Object.assign(new Image(), { src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" });
+let dragGhost = null, ghostGrab = null;
+
+function startGhost(cardEl, e) {
+  const r = cardEl.getBoundingClientRect();
+  ghostGrab = { x: e.clientX - r.left, y: e.clientY - r.top };
+  dragGhost = Object.assign(cardEl.cloneNode(true), { id: "" });
+  dragGhost.classList.add("drag-ghost");
+  Object.assign(dragGhost.style, { width: r.width + "px", left: r.left + "px", top: r.top + "px" });
+  $("board").append(dragGhost);
+  e.dataTransfer.setDragImage(EMPTY_DRAG_IMAGE, 0, 0);
+}
+
+document.addEventListener("dragover", e => {
+  if (!dragGhost) return;
+  dragGhost.style.left = e.clientX - ghostGrab.x + "px";
+  dragGhost.style.top = e.clientY - ghostGrab.y + "px";
+});
+
+function stopGhost() {
+  dragGhost?.remove();
+  dragGhost = null;
+}
+
 // The element the dragged item should be inserted before, by the pointer position
 function insertBefore(container, selector, pos, axis) {
   return [...container.querySelectorAll(selector)].find(el => {
@@ -196,6 +222,7 @@ $("bCols").addEventListener("dragstart", e => {
   const cardEl = e.target.closest?.(".card");
   const headEl = e.target.closest?.(".col-head");
   closeMenu();
+  if (cardEl) startGhost(cardEl, e);
   if (cardEl?.classList.contains("inbox-item")) {
     dragCard = { inbox: cardEl.dataset.inbox };
     placeholder.style.height = cardEl.offsetHeight + "px";
@@ -254,6 +281,7 @@ $("bCols").addEventListener("drop", e => {
 });
 
 $("bCols").addEventListener("dragend", () => {
+  stopGhost();
   dragCard = dragColumn = null;
   placeholder.remove();
   renderBoard();

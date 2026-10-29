@@ -218,6 +218,16 @@
   display: none;
 }
 
+/* the card in the hand while it is dragged: the card itself, lifted a little, under the pointer */
+.drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  margin: 0;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  transform: rotate(2deg);
+}
+
 /* where the dragged card will land */
 .card-ph {
   flex: none;
