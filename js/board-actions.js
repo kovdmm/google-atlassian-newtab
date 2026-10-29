@@ -65,10 +65,10 @@ function editCardText(cardEl) {
   const placeholder = card.key || card.pr ? t("boardDescPlaceholder", cardName(card)) : "";
   const input = Object.assign(document.createElement("textarea"),
     { className: "card-edit", value: card.text || "", rows: 3, maxLength: 500, placeholder });
-  // a note always has its text block; a Jira or PR card gets the box above its summary
+  // a note and a card with a description have their text block; a Jira or PR card without one gets the box on top
   const textEl = cardEl.querySelector(".card-text");
   if (textEl) textEl.replaceWith(input);
-  else cardEl.querySelector(".card-top").after(input);
+  else cardEl.prepend(input);
   cardEl.draggable = false;
   input.focus();
   input.select();

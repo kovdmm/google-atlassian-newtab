@@ -283,22 +283,15 @@
   overflow-wrap: anywhere;
 }
 
-/* the user's description on a Jira or PR card: on top, like a note's text; the summary goes under it, quieter.
-   A double click on it edits it, so a click there doesn't open the card */
-.card-top + .card-text {
-  font-size: 14px;
-  line-height: 20px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  cursor: text;
+/* a Jira or PR card with a description starts with it, like a note; its header (key, status) goes under it.
+   A double click on the text edits it, so a click there doesn't open the card */
+.note + .card-top,
+.card-edit + .card-top {
+  margin-top: 10px;
 }
 
-.card-top + .card-text + .card-title,
-.card-top + .card-edit + .card-title {
-  margin-top: 6px;
-  color: var(--on-surface-var);
-  font-size: 13px;
-  line-height: 18px;
+.card:not(.own) .card-text {
+  cursor: text;
 }
 
 
