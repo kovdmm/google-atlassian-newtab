@@ -111,7 +111,7 @@ $("bCols").addEventListener("click", e => {
 
   if (e.target.closest(".col-menu")) return columnMenu(e.target.closest(".col-menu"), col);
   if (e.target.closest(".col-add-own")) return openComposer(col);
-  if (e.target.closest(".col-add-jira")) return openTaskPicker(col);
+  if (e.target.closest(".col-add-link")) return openDocDialog({ col });
   if (e.target.closest(".composer-add")) return addOwnTask(col, colEl.querySelector(".composer-input").value);
   if (e.target.closest(".composer-cancel")) return closeComposer();
 

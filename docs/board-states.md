@@ -19,9 +19,9 @@ stateDiagram-v2
   state "PR card" as PR
   state "Note" as Txt
 
-  [*] --> Jira : "+ Note" → Add (only a task key or link)<br/>"+ Jira Ticket" → pick a task
-  [*] --> PR : "+ Note" → Add (only a PR link)
-  [*] --> Txt : "+ Note" → Add (any other text)
+  [*] --> Jira : "+ Note" → Add (only a task key or link)<br/>"+ Link" → pick a task
+  [*] --> PR : "+ Note" → Add (only a PR link)<br/>"+ Link" → pick a PR
+  [*] --> Txt : "+ Note" → Add (any other text)<br/>"+ Link" → pick any other page (a note with just that link)
 
   Inbox --> Jira : drag a Jira notification to a column
   Inbox --> PR : drag a PR notification to a column
@@ -39,7 +39,8 @@ stateDiagram-v2
 - ⋮ → "Remove from the board" removes a card of any kind; it is left out of the picture to keep it readable. So are "Add link", × on a link and "Deadline…" – every card has them, and they never change its kind.
 - Editing text only changes the text. An empty description is just no description; a Jira or PR card stays.
 - A note goes when nothing is left of it: no text and no links. The deadline doesn't keep an empty note.
-- "+ Note" makes a Jira or PR card only when the text is nothing but a task key or link, or a PR link. A task or PR that is already a card on the board is never made into a second card: the existing card flashes instead. The same goes for Inbox.
+- "+ Note" makes a Jira or PR card only when the text is nothing but a task key or link, or a PR link. A task or PR that is already a card on the board is never made into a second card: "+ Note" and Inbox flash the existing card instead, "+ Link" shows it as "on the board" and doesn't let you pick it.
+- "+ Link" is the same dialog as ⋮ → "Add link", only the picked link becomes a new card in the column; on an empty box it lists my Jira tasks first.
 - A card never links itself: a Jira card doesn't link its own task, a PR card – its own pull request, and "Add link" doesn't offer them.
 - Cards are dragged between columns in any state; no arrow changes the column.
 

@@ -1,90 +1,18 @@
-// Board dialogs that pick something: a Jira task for a column, a task or a page to link to a card.
+// Board dialog that picks a link: a task or a page to link to a card, or to add to a column as a new card.
 
 // =====================================================================================
-// "+ From Jira": my Jira tasks with a filter, or any task number, added to a column as cards
+// One dialog for every link – Jira tasks (my tasks, a task number, recently opened tasks), Confluence pages and
+// any other page (history, Confluence search, a pasted address). Two uses:
+//   ⋮ → "Add link" on a card – the link goes to the card's links;
+//   "+ Link" under a column – the link becomes a new card there: a task – its Jira card, a pull request – its PR
+//   card, any other page – a note with just that link. A task or PR that is already a card can't be picked again
 // =====================================================================================
 
-let pickColumn = null; // column the tasks are added to
-let pickKeys = [];
-let pickNotice = ""; // why my Jira tasks aren't listed: no access, not signed in, the limit or an error
-
-function renderPicker() {
-  const filter = $("pickFilter").value.trim().toLowerCase();
-  // already a card on the board
-  const onBoard = cardsOnBoard();
-  const takenLabel = t("boardOnBoard");
-  const rows = pickKeys.filter(key => {
-    const issue = issueOf(key);
-    return !filter || key.toLowerCase().includes(filter) || (issue?.summary || "").toLowerCase().includes(filter);
-  }).map(key => {
-    const issue = issueOf(key), there = onBoard.has(key);
-    return `
-      <button type="button" class="pick-row" data-key="${esc(key)}"${there ? " disabled" : ""}>
-        <span class="card-key">${esc(key)}</span>
-        <span class="pick-title">${esc(issue?.summary || "")}</span>
-        ${there ? `<span class="pick-there">${esc(takenLabel)}</span>` : issueBadge(issue)}
-      </button>`;
-  });
-  // a task number that isn't in my list – add it anyway
-  const typed = filter ? taskKeyOf(filter) : null;
-  if (typed && !pickKeys.includes(typed) && !onBoard.has(typed)) {
-    rows.unshift(`<button type="button" class="pick-row" data-key="${esc(typed)}"><span class="card-key">${esc(typed)}</span>` +
-      `<span class="pick-title">${esc(t("boardAddKey", typed))}</span></button>`);
-  }
-  $("pickList").innerHTML = (rows.join("") || (pickNotice ? "" : `<div class="pick-msg">${esc(t("boardPickEmpty"))}</div>`)) + pickNotice;
-  $("pickAccess")?.addEventListener("click", () => fixAccess(myTasksError, () => openTaskPicker(pickColumn)));
-}
-
-async function openTaskPicker(col) {
-  pickColumn = col;
-  pickKeys = [];
-  pickNotice = "";
-  $("pickTitle").textContent = t("boardPickTitle", col.name);
-  $("pickFilter").value = "";
-  if (!$("pickDlg").open) $("pickDlg").showModal();
-  $("pickFilter").focus();
-
-  $("pickList").innerHTML = `<div class="pick-msg">${esc(t("boardPickLoading"))}</div>`;
-  const keys = await myTasks();
-  if (keys === null) {
-    const { text, button } = accessNotice(myTasksError);
-    const message = text ?? t("boardErrorText", myTasksError.replace("http ", "HTTP ") || "?");
-    pickNotice = `<div class="pick-access">${BOARD_ICONS.task}` +
-      `<div class="pick-access-text">${esc(message)}</div>` +
-      `<button type="button" class="btn filled" id="pickAccess">${esc(button)}</button></div>`;
-  } else {
-    pickKeys = keys;
-  }
-  renderPicker();
-}
-
-$("pickFilter").addEventListener("input", renderPicker);
-$("pickFilter").addEventListener("keydown", e => {
-  if (e.key !== "Enter") return;
-  e.preventDefault();
-  $("pickList").querySelector(".pick-row:not([disabled])")?.click();
-});
-$("pickList").addEventListener("click", e => {
-  const row = e.target.closest(".pick-row");
-  if (!row || row.disabled) return;
-  const card = jiraCard(row.dataset.key);
-  pickColumn.cards.push(card);
-  update();
-  refreshFor(card);
-  renderPicker(); // the dialog stays open: several tasks can be added in a row
-  $("pickFilter").focus();
-});
-$("pickClose").onclick = () => $("pickDlg").close();
-
-// =====================================================================================
-// "Add link": one dialog for everything a card can link to – Jira tasks (my tasks, a task number,
-// recently opened tasks), Confluence pages and any other page (history, Confluence search, a pasted address).
-// Every kind of card links both tasks and pages
-// =====================================================================================
-
-let docCard = null;    // card a task or a page is being linked to
+let docCard = null;    // card a task or a page is being linked to…
+let docColumn = null;  // …or the column a new card is added to
 let docTimer = null, docCtrl = null, docTasks = [];
-const DOC_ROWS = 12, DOC_TASKS = 5;
+let docNotice = "";    // "+ Link": why my Jira tasks aren't listed – no access, not signed in, the limit or an error
+const DOC_ROWS = 12, DOC_TASKS = 5, DOC_MY_TASKS = 8;
 
 // A pasted link gets a readable title from its address: …/pages/123/Release+notes → "Release notes"
 function titleFromUrl(url) {
@@ -126,9 +54,10 @@ async function historyLinks(q) {
   return rows;
 }
 
-// My Jira tasks and a typed task number, for the text in the box
+// My Jira tasks and a typed task number, for the text in the box; "+ Link" lists my tasks on an empty box too
 function taskLinks(q) {
-  if (!q || !canLinkTasks()) return [];
+  if (!canLinkTasks()) return [];
+  if (!q) return docColumn ? docTasks.slice(0, DOC_MY_TASKS).map(key => ({ key, title: issueOf(key)?.summary || "" })) : [];
   const f = q.toLowerCase();
   const keys = docTasks.filter(key => key.toLowerCase().includes(f) || (issueOf(key)?.summary || "").toLowerCase().includes(f));
   const typed = taskKeyOf(q);
@@ -136,17 +65,25 @@ function taskLinks(q) {
   return keys.slice(0, DOC_TASKS).map(key => ({ key, title: issueOf(key)?.summary || t("boardAddKey", key) }));
 }
 
-const docRowHtml = r => r.key
-  ? `<button type="button" class="pick-row" data-key="${esc(r.key)}">${BOARD_ICONS.task}<span class="card-key">${esc(r.key)}</span>` +
-    `<span class="pick-title">${esc(r.title)}</span>` +
-    issueBadge(issueOf(r.key)) + `</button>`
-  : `<button type="button" class="pick-row" data-url="${esc(r.url)}" data-title="${esc(r.title)}">` +
-    `${linkIcon(r.url)}<span class="pick-title">${esc(r.title)}</span><span class="pick-there">${esc(r.hint)}</span></button>`;
+// "+ Link": a task or PR that is already a card on the board
+const onBoardRow = r => Boolean(docColumn) &&
+  (r.key ? cardsOnBoard().has(r.key) : Boolean(prRefOf(r.url)) && prCardsOnBoard().has(prRefOf(r.url)));
+
+function docRowHtml(r) {
+  const there = onBoardRow(r), off = there ? " disabled" : "";
+  const thereLabel = `<span class="pick-there">${esc(t("boardOnBoard"))}</span>`;
+  return r.key
+    ? `<button type="button" class="pick-row" data-key="${esc(r.key)}"${off}>${BOARD_ICONS.task}<span class="card-key">${esc(r.key)}</span>` +
+      `<span class="pick-title">${esc(r.title)}</span>` + (there ? thereLabel : issueBadge(issueOf(r.key))) + `</button>`
+    : `<button type="button" class="pick-row" data-url="${esc(r.url)}" data-title="${esc(r.title)}"${off}>` +
+      `${linkIcon(r.url)}<span class="pick-title">${esc(r.title)}</span>` +
+      (there ? thereLabel : `<span class="pick-there">${esc(r.hint)}</span>`) + `</button>`;
+}
 
 // what is already on the card, and the card itself, is left out; one task or page once
 function showDocRows(rows) {
-  const linked = new Set([...(docCard.links || []).map(l => l.key || linkRef(l.url)),
-    docCard.key, docCard.pr && linkRef(docCard.url)].filter(Boolean));
+  const linked = new Set(docCard ? [...(docCard.links || []).map(l => l.key || linkRef(l.url)),
+    docCard.key, docCard.pr && linkRef(docCard.url)].filter(Boolean) : []);
   const seen = new Set();
   const fresh = rows.filter(r => {
     const ref = r.key || linkRef(r.url);
@@ -154,9 +91,10 @@ function showDocRows(rows) {
     seen.add(ref);
     return true;
   }).slice(0, DOC_ROWS);
-  $("docList").innerHTML = fresh.length
+  $("docList").innerHTML = (fresh.length
     ? fresh.map(docRowHtml).join("")
-    : `<div class="pick-msg">${esc(t("boardDocHint"))}</div>`;
+    : `<div class="pick-msg">${esc(t("boardDocHint"))}</div>`) + (docColumn && !$("docInput").value.trim() ? docNotice : "");
+  $("docAccess")?.addEventListener("click", () => fixAccess(myTasksError, () => openDocDialog({ col: docColumn })));
 }
 
 async function renderDocList() {
@@ -191,33 +129,58 @@ async function renderDocList() {
   }, q ? 200 : 0);
 }
 
-async function openDocDialog(card) {
+// { card } – link to that card; { col } – add a new card to that column ("+ Link")
+async function openDocDialog({ card = null, col = null }) {
   docCard = card;
+  docColumn = col;
   docTasks = [];
-  $("docTitle").textContent = t("boardDocTitle", cardName(card));
+  docNotice = "";
+  $("docTitle").textContent = card ? t("boardDocTitle", cardName(card)) : t("boardPickTitle", col.name);
   $("docInput").placeholder = t(canLinkTasks() ? "boardDocPlaceholder" : "boardDocPlaceholderPages");
   $("docInput").value = "";
   $("docList").innerHTML = "";
-  $("docDlg").showModal();
+  if (!$("docDlg").open) $("docDlg").showModal();
   $("docInput").focus();
   renderDocList();
-  // my tasks arrive a bit later (cached for a while); the list is redrawn when they do
-  if (canLinkTasks() && (await jiraReady().catch(() => false))) {
-    docTasks = (await myTasks()) || [];
-    if ($("docDlg").open && $("docInput").value.trim()) renderDocList();
+  // my tasks arrive a bit later (cached for a while); the list is redrawn when they do.
+  // "+ Link" asks for them even without access yet – the answer tells which button helps
+  if (!canLinkTasks() || (!col && !(await jiraReady().catch(() => false)))) return;
+  const keys = await myTasks();
+  docTasks = keys || [];
+  if (keys === null && col) {
+    const { text, button } = accessNotice(myTasksError);
+    const message = text ?? t("boardErrorText", myTasksError.replace("http ", "HTTP ") || "?");
+    docNotice = `<div class="pick-access">${BOARD_ICONS.task}<div class="pick-access-text">${esc(message)}</div>` +
+      `<button type="button" class="btn filled" id="docAccess">${esc(button)}</button></div>`;
   }
+  if ($("docDlg").open && ($("docInput").value.trim() || col)) renderDocList();
+}
+
+// "+ Link": the picked link as a new card at the end of the column
+function addLinkCard(row) {
+  const { key, url, title } = row.dataset, ref = !key && prRefOf(url);
+  const card = key ? jiraCard(key) : ref ? prCard(ref, url) : noteCard("", { links: [{ title, url }] });
+  docColumn.cards.push(card);
+  update();
+  refreshFor(card);
 }
 
 $("docInput").addEventListener("input", renderDocList);
 $("docInput").addEventListener("keydown", e => {
   if (e.key !== "Enter") return;
   e.preventDefault();
-  $("docList").querySelector(".pick-row")?.click();
+  $("docList").querySelector(".pick-row:not([disabled])")?.click();
 });
-// the dialog stays open: several tasks and pages can be linked in a row
+// the dialog stays open: several tasks and pages can be linked (or added) in a row
 $("docList").addEventListener("click", e => {
   const row = e.target.closest(".pick-row");
-  if (!row) return;
+  if (!row || row.disabled) return;
+  if (docColumn) {
+    addLinkCard(row);
+    $("docInput").value = "";
+    renderDocList();
+    return $("docInput").focus();
+  }
   docCard.links ??= [];
   if (row.dataset.key) {
     docCard.links.push({ key: row.dataset.key });

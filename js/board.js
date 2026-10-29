@@ -9,7 +9,7 @@
 //   board.js          – the model, card constructors, rendering, ⋮ menus, columns, full screen, deadlines
 //   board-actions.js  – adding notes, editing card text, clicks, drag and drop
 //   board-inbox.js    – the Inbox column (Atlassian notifications)
-//   board-pickers.js  – "+ From Jira" and "Add link" dialogs
+//   board-pickers.js  – the link dialog: "Add link" on a card and "+ Link" under a column
 //   board-backup.js   – export / import of the whole board (settings → Board)
 
 // board = { expanded, columns: [{ id, name, type, cards: [card] }] }
@@ -115,7 +115,7 @@ function jiraCard(key, from) {
   return card;
 }
 
-const noteCard = (text, from) => ({ id: "own-" + newId(), ...carryOver(from), text });
+const noteCard = (text, from) => ({ id: "own-" + newId(), ...carryOver(from), ...(text && { text }) });
 
 // title and state are the last known ones (no blink after a reload), refreshed from Bitbucket;
 // from – the card it is made of (see carryOver); a PR card never links itself
@@ -409,7 +409,7 @@ function columnHtml(col) {
   const addButtons = composerColumn === col.id ? "" : `
     <div class="col-actions">
       <button type="button" class="col-add col-add-own">+ ${esc(t("boardOwnAdd"))}</button>
-      ${hasJira() ? `<button type="button" class="col-add col-add-jira">+ ${esc(t("boardFromJira"))}</button>` : ""}
+      <button type="button" class="col-add col-add-link">+ ${esc(t("boardAddLinkCard"))}</button>
     </div>`;
   return `
     <div class="col" data-col="${col.id}">
@@ -497,7 +497,7 @@ function cardMenu(button, col, card) {
     { icon: BOARD_ICONS.edit, label: t(!card.key && !card.pr ? "boardEditText" : card.text ? "boardEditDescription" : "boardAddDescription"),
       run: () => editCardText(button.closest(".card")) },
     { heading: "" },
-    { icon: BOARD_ICONS.link, label: t("boardAddDoc"), run: () => openDocDialog(card) },
+    { icon: BOARD_ICONS.link, label: t("boardAddDoc"), run: () => openDocDialog({ card }) },
     { heading: "" },
     { icon: BOARD_ICONS.calendar, label: t("boardDue"), run: () => openDueDialog(card) },
     { heading: "" },
