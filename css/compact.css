@@ -1,0 +1,89 @@
+/* =====================================================================================
+   Compact view: one top bar – a small "Google × Atlassian", the search box, ⋮ and the avatar –
+   and the rest of the page for the board. No Gmail/Images links and no shortcuts
+   ===================================================================================== */
+
+.compact header {
+  height: 64px;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.compact header a {
+  display: none;
+}
+
+/* the logo and the search box sit over the bar, between its left edge and ⋮ + avatar */
+.compact main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  flex-direction: row;
+  justify-content: center;
+  gap: 24px;
+  height: 64px;
+  margin: 0;
+  padding: 0 120px 0 24px;
+  pointer-events: none;
+}
+
+.compact main > * {
+  pointer-events: auto;
+}
+
+.compact .brand {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.compact img.logo {
+  width: 92px;
+  height: 31px;
+}
+
+.compact .tagline {
+  display: none;
+}
+
+.brand-x {
+  display: none;
+}
+
+.compact.atlassian .brand-x {
+  display: block;
+  color: var(--jira);
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.compact .smart {
+  flex: 0 1 746px;
+  min-width: 0;
+}
+
+.compact .shortcuts {
+  display: none;
+}
+
+/* the board right under the bar */
+.compact .board {
+  margin-top: 0;
+}
+
+/* no floating "Full screen board" button here, so no room kept for it at the bottom */
+.compact .board-cols {
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+
+/* a narrow window: the logo goes, the search box keeps its room */
+@media (max-width: 760px) {
+  .compact .brand {
+    display: none;
+  }
+}

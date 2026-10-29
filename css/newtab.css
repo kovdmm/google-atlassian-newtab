@@ -1,0 +1,1051 @@
+/* Jumpstart – new tab page styles.
+   Mirrors the native Chrome new tab page; dialogs follow Material 3 like Chrome's own settings. */
+
+/* =====================================================================================
+   Theme tokens
+   Dark by default; light follows Chrome's mode (Settings → Appearance → Mode).
+   A background picked in the settings sets data-scheme by its brightness (see theme.js),
+   so the light tokens are needed twice: for the light mode and for a forced light scheme.
+   ===================================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* page */
+  --bg: #3c3c3c;
+  --fg: #fff;
+  --tile: #2b2b2b;
+  --lbl: #e8eaed;
+  --hover: rgba(255, 255, 255, .1);
+  --jira: #579dff;
+  --logo-filter: brightness(0) invert(1);
+  --box-shadow: none;
+  --backdrop: rgba(0, 0, 0, .5);
+  --col-bg: rgba(0, 0, 0, .28);
+  --card-bg: #34363a;
+  --card-shadow: 0 1px 1px rgba(0, 0, 0, .4);
+
+  /* dialogs (Material 3 surfaces) */
+  --surface: #282a2c;
+  --surface-2: #333537;
+  --on-surface: #e3e3e3;
+  --on-surface-var: #c4c7c5;
+  --outline: #8e918f;
+  --outline-var: #444746;
+  --primary: #a8c7fa;
+  --on-primary: #062e6f;
+  --primary-hover: #bcd4fb;
+  --text-hover: rgba(168, 199, 250, .08);
+  --tonal-hover: #3d3f42;
+  --error: #f2b8b5;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23c4c7c5'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-scheme="dark"]) {
+    --bg: #fff;
+    --fg: #202124;
+    --tile: #f1f3f4;
+    --lbl: #202124;
+    --hover: rgba(32, 33, 36, .06);
+    --jira: #0c66e4;
+    --logo-filter: none;
+    --box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    --backdrop: rgba(0, 0, 0, .32);
+    --col-bg: #f1f2f4;
+    --card-bg: #fff;
+    --card-shadow: 0 1px 1px rgba(9, 30, 66, .25), 0 0 1px rgba(9, 30, 66, .31);
+
+    --surface: #fff;
+    --surface-2: #f0f4f9;
+    --on-surface: #1f1f1f;
+    --on-surface-var: #444746;
+    --outline: #747775;
+    --outline-var: #c4c7c5;
+    --primary: #0b57d0;
+    --on-primary: #fff;
+    --primary-hover: #0842a0;
+    --text-hover: rgba(11, 87, 208, .08);
+    --tonal-hover: #e1e5ea;
+    --error: #b3261e;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23444746'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  }
+}
+
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-scheme="light"] {
+  color-scheme: light;
+
+  --bg: #fff;
+  --fg: #202124;
+  --tile: #f1f3f4;
+  --lbl: #202124;
+  --hover: rgba(32, 33, 36, .06);
+  --jira: #0c66e4;
+  --logo-filter: none;
+  --box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+  --backdrop: rgba(0, 0, 0, .32);
+  --col-bg: #f1f2f4;
+  --card-bg: #fff;
+  --card-shadow: 0 1px 1px rgba(9, 30, 66, .25), 0 0 1px rgba(9, 30, 66, .31);
+
+  --surface: #fff;
+  --surface-2: #f0f4f9;
+  --on-surface: #1f1f1f;
+  --on-surface-var: #444746;
+  --outline: #747775;
+  --outline-var: #c4c7c5;
+  --primary: #0b57d0;
+  --on-primary: #fff;
+  --primary-hover: #0842a0;
+  --text-hover: rgba(11, 87, 208, .08);
+  --tonal-hover: #e1e5ea;
+  --error: #b3261e;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23444746'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+}
+
+/* =====================================================================================
+   Base
+   ===================================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Google Sans", Roboto, "Segoe UI", Arial, sans-serif;
+}
+
+/* =====================================================================================
+   Header: Gmail, Images, settings (⋮), avatar
+   ===================================================================================== */
+
+header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  font-size: 13px;
+}
+
+header a {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+header a:hover {
+  text-decoration: underline;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+}
+
+.dots {
+  display: grid;
+  grid-template-columns: 3px;
+  gap: 3px;
+}
+
+.dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.avatar {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.avatar:not([src]),
+.avatar[src=""] {
+  display: none;
+}
+
+/* =====================================================================================
+   Logo and the search box
+   ===================================================================================== */
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 70px;
+  padding: 0 16px;
+}
+
+/* logo with "enhanced with Atlassian" at the bottom right, like Google product logos */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 41px;
+}
+
+img.logo {
+  display: block;
+  width: 272px;
+  height: 92px;
+  filter: var(--logo-filter);
+}
+
+.tagline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  margin: 2px 6px -20px 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .2px;
+  color: var(--jira);
+}
+
+/* the search box and its dropdown are white in both themes, like Chrome's */
+.smart {
+  position: relative;
+  z-index: 10; /* the dropdown opens over the board */
+  width: min(746px, 100%);
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 48px;
+  padding: 0 12px 0 20px;
+  border-radius: 24px;
+  background: #fff;
+  color: #202124;
+  box-shadow: var(--box-shadow);
+}
+
+.box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+}
+
+.box input::placeholder {
+  color: #5f6368;
+}
+
+.box svg {
+  flex: none;
+}
+
+/* mic and Lens buttons */
+.ibtn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.ibtn:hover {
+  background: #f1f3f4;
+}
+
+.ibtn.listening {
+  background: #fce8e6;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+.ibtn.listening svg {
+  fill: #d93025;
+}
+
+@keyframes mic-pulse {
+  50% { box-shadow: 0 0 0 6px rgba(217, 48, 37, .15); }
+}
+
+/* =====================================================================================
+   Dropdown (like Chrome's realbox)
+   ===================================================================================== */
+
+.smart.open .box {
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -1px 6px rgba(32, 33, 36, .18);
+}
+
+.dd {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: none;
+  max-height: min(60vh, 528px);
+  padding: 0 0 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 0 0 24px 24px;
+  background: #fff;
+  color: #202124;
+  box-shadow: 0 4px 6px rgba(32, 33, 36, .28);
+  scrollbar-width: thin;
+  scrollbar-color: #c4c7c5 transparent;
+}
+
+.dd.open {
+  display: block;
+}
+
+.dd .it {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.dd .it.active,
+.dd .it:hover {
+  background: #f1f3f4;
+}
+
+.dd .it .ico {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.dd .it .t {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd .it .t .s {
+  color: #5f6368;
+}
+
+.dd .it.notice .t {
+  color: #1a73e8;
+}
+
+/* the matched part is bold, like Chrome */
+.dd mark {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+
+/* status badges in Jira colors (to do / in progress / done); also PR states and board cards */
+.st {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #dfe1e6;
+  color: #42526e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.st-indeterminate {
+  background: #deebff;
+  color: #0747a6;
+}
+
+.st-done {
+  background: #e3fcef;
+  color: #006644;
+}
+
+/* =====================================================================================
+   Shortcuts, like the native new tab page
+   112×112 tiles that never shrink. A wide window shows all 8 in one row; a narrower one wraps them
+   by the search box width (5 + 3, very narrow 3 + 3 + 2); an incomplete row is centered.
+   ===================================================================================== */
+
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(896px, 100%);
+  margin-top: 18px;
+}
+
+/* a top-down flex column: otherwise the "Add" <button> centers its content vertically */
+.sc {
+  position: relative;
+  display: flex;
+  flex: 0 0 112px;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 0;
+  height: 112px;
+  padding: 16px 0 0;
+  border-radius: 8px;
+  color: var(--fg);
+  font-size: 13px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .15s;
+}
+
+.sc:hover,
+.sc.over {
+  background: var(--hover);
+}
+
+.sc.dragging {
+  opacity: .4;
+}
+
+.sc .ic {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--tile);
+  color: var(--lbl);
+}
+
+.sc .ic img {
+  width: 24px;
+  height: 24px;
+}
+
+.sc .lbl {
+  padding: 0 8px;
+  overflow: hidden;
+  color: var(--lbl);
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ⋮ – edit / remove */
+.sc .more {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--lbl);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.sc:hover .more,
+.sc .more:focus-visible {
+  opacity: 1;
+}
+
+.sc .more:hover {
+  background: var(--hover);
+}
+
+.add {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* narrower than a row of 8 tiles: the search box and the grid share one width, a multiple of the tile
+   (at most 5 × 112 = 560), like Chrome. --grid-w is computed by fitGrid() in newtab.js */
+@media (max-width: 927px) {
+  .smart,
+  .shortcuts {
+    width: var(--grid-w, min(560px, 100%));
+  }
+}
+
+/* very narrow window: smaller side padding so 3 tiles fit next to a scrollbar, like Chrome */
+@media (max-width: 420px) {
+  main {
+    padding: 0 8px;
+  }
+}
+
+/* =====================================================================================
+   Dialogs (Material 3)
+   ===================================================================================== */
+
+dialog.m3 {
+  width: min(400px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 28px;
+  background: var(--surface);
+  color: var(--on-surface);
+  box-shadow: 0 8px 12px 6px rgba(0, 0, 0, .15), 0 4px 4px rgba(0, 0, 0, .3);
+}
+
+dialog.m3[open] {
+  animation: dialog-in .18s cubic-bezier(.2, 0, 0, 1);
+}
+
+dialog.m3::backdrop {
+  background: var(--backdrop);
+  animation: fade-in .18s ease-out;
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+dialog.m3 form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  padding: 24px;
+}
+
+dialog.m3 h2 {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+dialog.m3 .head {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+dialog.m3 .head h2 {
+  margin: 0;
+}
+
+.icon-btn.small {
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  color: var(--on-surface-var);
+}
+
+/* scrollable middle between the fixed header and buttons */
+dialog.m3 .body {
+  min-height: 0;
+  margin: 0 -24px;
+  padding: 0 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-var) transparent;
+}
+
+dialog.m3 section {
+  padding: 14px 0;
+  border-top: 1px solid var(--outline-var);
+}
+
+dialog.m3 section:first-of-type {
+  border-top: 0;
+}
+
+.sec-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .1px;
+}
+
+.welcome,
+.confirm-text {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--on-surface-var);
+}
+
+.welcome {
+  flex: none;
+  margin: 4px 0 8px;
+}
+
+.confirm-text {
+  margin: -8px 0 8px;
+}
+
+/* ---- buttons ---- */
+
+dialog.m3 .actions {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 16px;
+}
+
+dialog.m3 .body + .actions {
+  border-top: 1px solid var(--outline-var);
+}
+
+dialog.m3 .actions > span {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  height: 40px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .1px;
+  cursor: pointer;
+  transition: background-color .15s;
+}
+
+.btn.filled {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn.filled:hover {
+  background: var(--primary-hover);
+}
+
+.btn.text {
+  padding: 0 12px;
+  background: none;
+  color: var(--primary);
+}
+
+.btn.text:hover {
+  background: var(--text-hover);
+}
+
+.btn.tonal {
+  flex: none;
+  padding: 0 16px;
+  background: var(--surface-2);
+  color: var(--on-surface);
+}
+
+.btn.tonal:hover {
+  background: var(--tonal-hover);
+}
+
+.btn:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---- form fields ---- */
+
+.field {
+  margin-bottom: 12px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field.spaced {
+  margin-top: 14px;
+}
+
+.field label {
+  display: block;
+  margin: 0 0 6px 2px;
+  color: var(--on-surface-var);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  outline: none;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.field select {
+  padding-right: 40px;
+  background: var(--chevron) no-repeat right 10px center;
+  cursor: pointer;
+  appearance: none;
+}
+
+.field select option {
+  background: var(--surface-2);
+  color: var(--on-surface);
+}
+
+.field input::placeholder {
+  color: var(--outline);
+}
+
+.field input:hover,
+.field select:hover {
+  border-color: var(--on-surface);
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.row .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.row .field {
+  margin-bottom: 0;
+}
+
+.field.key {
+  flex: none;
+  width: 132px;
+}
+
+.field.key input {
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.help,
+.err {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.help {
+  color: var(--on-surface-var);
+}
+
+.help b {
+  color: var(--primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.help.ok {
+  color: var(--primary);
+}
+
+.help.bad,
+.err {
+  color: var(--error);
+}
+
+.err {
+  display: none;
+}
+
+.field.invalid input {
+  border-color: var(--error);
+  box-shadow: inset 0 0 0 1px var(--error);
+}
+
+.field.invalid .err {
+  display: block;
+}
+
+.field.invalid .help {
+  display: none;
+}
+
+/* =====================================================================================
+   Settings dialog
+   ===================================================================================== */
+
+/* fixed height: the dialog doesn't jump when switching tabs, a long tab scrolls */
+dialog.m3.wide {
+  width: min(560px, calc(100vw - 32px));
+}
+
+dialog.m3.wide form {
+  height: min(760px, calc(100vh - 32px));
+}
+
+dialog.m3.wide .body {
+  flex: 1;
+}
+
+/* ---- tabs: "General" first, everything about Atlassian on its own tab ---- */
+
+.tabs {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  margin: 4px -24px 0;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--outline-var);
+}
+
+.tab {
+  padding: 12px 16px 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 3px 3px 0 0;
+  background: none;
+  color: var(--on-surface-var);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--text-hover);
+  color: var(--on-surface);
+}
+
+.tab.active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* ---- profile ---- */
+
+.profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.profile .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  margin-top: 20px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+
+/* ---- background swatches ---- */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swatch {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--outline-var);
+  border-radius: 50%;
+  background: var(--c);
+  cursor: pointer;
+}
+
+.swatch.auto {
+  background: linear-gradient(135deg, #fff 50%, #202124 50%);
+}
+
+.swatch.custom {
+  overflow: hidden;
+  background: conic-gradient(#ea4335, #fbbc04, #34a853, #4285f4, #a142f4, #ea4335);
+}
+
+.swatch.custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatch.selected {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* ---- quick search: two groups of checkboxes ---- */
+
+.src-group + .src-group {
+  margin-top: 12px;
+}
+
+.src-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 2px 4px;
+  color: var(--on-surface);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.src-sub {
+  color: var(--on-surface-var);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .checks {
+    grid-template-columns: 1fr;
+  }
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 2px;
+  color: var(--on-surface);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check input {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 2px solid var(--on-surface-var);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  transition: background-color .15s, border-color .15s;
+}
+
+.check input:checked {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.check input:checked::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--on-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.check input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

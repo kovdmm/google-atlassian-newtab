@@ -1,0 +1,1059 @@
+/* =====================================================================================
+   Kanban board (board.js)
+   ===================================================================================== */
+
+/* With the board the page is a column: the top part keeps its height,
+   the board takes the rest of the window, but at least its bottom half */
+.with-board body {
+  display: flex;
+  flex-direction: column;
+}
+
+.with-board main {
+  margin-top: 40px;
+}
+
+.board {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 50vh;
+  /* apart from the search box and the shortcuts (the board's own padding starts inside the scrolling area) */
+  margin-top: 32px;
+}
+
+/* expanded to the whole page */
+.board.full {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  min-height: 0;
+  margin: 0;
+  background: var(--bg);
+}
+
+/* columns in one horizontal row that scrolls, like Trello */
+.board-cols {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 0;
+  /* all the spacing is inside the scrolling area: the scrollbar sits at the very bottom, and the bottom room
+     keeps the last cards clear of the floating "Full screen board" button */
+  padding: 24px 16px 72px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+/* centered while all columns fit (in the page and in full screen); auto margins, unlike justify-content,
+   still let a wider board scroll from its first column */
+.board.full .board-cols {
+  padding: 24px 24px 72px;
+}
+
+.board-cols > :first-child {
+  margin-left: auto;
+}
+
+.board-cols > :last-child {
+  margin-right: auto;
+}
+
+/* ---- columns: fixed width ---- */
+
+.col {
+  display: flex;
+  flex: 0 0 300px;
+  flex-direction: column;
+  width: 300px;
+  max-height: 100%;
+  border-radius: 12px;
+  background: var(--col-bg);
+  color: var(--fg);
+}
+
+.col.dragging {
+  opacity: .4;
+}
+
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 10px 16px;
+}
+
+/* the grab hand only where a column can be dragged (not with locked columns, not on the Inbox) */
+.col-head[draggable="true"] {
+  cursor: grab;
+}
+
+.col-name {
+  flex: 1;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card-bg);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.col-count {
+  font-size: 12px;
+  opacity: .7;
+}
+
+.link-del {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  opacity: .7;
+  cursor: pointer;
+}
+
+.link-del:hover {
+  background: var(--hover);
+  opacity: 1;
+}
+
+.col-cards {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 8px;
+  padding: 2px 10px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.col-actions {
+  display: flex;
+  gap: 6px;
+  margin: 12px 10px 10px;
+}
+
+.col-add {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px dashed var(--outline-var);
+  border-radius: 8px;
+  background: none;
+  color: var(--on-surface-var);
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+
+/* "+ Note" / "+ Jira Ticket": dashed drop-in slots, solid on hover */
+.col-add:hover,
+.col-add:focus-visible {
+  border-style: solid;
+  border-color: var(--primary);
+  background: var(--hover);
+  color: var(--on-surface);
+}
+
+/* "+ Add column" – a ghost column at the end */
+.col-new {
+  flex: 0 0 300px;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--hover);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.col-new:hover {
+  background: var(--col-bg);
+}
+
+/* ---- cards ---- */
+
+.card {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--on-surface);
+  box-shadow: var(--card-shadow);
+  cursor: pointer;
+}
+
+.card:hover {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.card.dragging {
+  display: none;
+}
+
+/* where the dragged card will land */
+.card-ph {
+  flex: none;
+  border-radius: 8px;
+  background: var(--hover);
+  outline: 2px dashed var(--outline-var);
+  outline-offset: -2px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.card-key {
+  flex: none;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* a note: just its text, ⋮ in the top right corner */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.note .card-title {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+}
+
+.note .menu-btn {
+  order: 1;
+  width: 24px;
+  height: 24px;
+  margin: -4px -6px 0 0;
+}
+
+
+.card-edit {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  outline: none;
+  background: var(--card-bg);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  resize: vertical;
+}
+
+.card-title {
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+
+
+.link-del {
+  width: 20px;
+  height: 20px;
+  margin-right: 2px;
+  opacity: 0;
+}
+
+/* ---- "Add a task" and "Link a page" dialogs ---- */
+
+dialog.m3.pick {
+  width: min(560px, calc(100vw - 32px));
+}
+
+dialog.m3.pick .head {
+  margin-bottom: 12px;
+}
+
+.pick-list {
+  max-height: min(50vh, 420px);
+  margin: 0 -12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick-row:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.pick-row:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.pick-row svg {
+  flex: none;
+  color: var(--jira);
+}
+
+.pick-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick-new .pick-title {
+  color: var(--primary);
+}
+
+.pick-there {
+  color: var(--on-surface-var);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.pick-msg {
+  padding: 12px;
+  color: var(--on-surface-var);
+  font-size: 14px;
+}
+
+/* no access to Jira yet / not signed in: what is needed and one button for it */
+.pick-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  text-align: center;
+}
+
+.pick-access svg {
+  width: 32px;
+  height: 32px;
+  color: #4bade8;
+}
+
+.pick-access-text {
+  max-width: 360px;
+  color: var(--on-surface-var);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* ---- board: visible actions ---- */
+
+/* "Full screen board" / "Collapse board": a floating pill in the bottom right corner, above the full screen board */
+.board-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--outline-var);
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--on-surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.board-btn:hover {
+  background: var(--tonal-hover);
+}
+
+/* ⋮ on every column and card – always visible, quiet until hovered */
+.menu-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  opacity: .55;
+  cursor: pointer;
+}
+
+.menu-btn:hover,
+.menu-btn:focus-visible {
+  background: var(--hover);
+  opacity: 1;
+}
+
+.card-top .menu-btn {
+  width: 24px;
+  height: 24px;
+  margin: -4px -6px -4px auto;
+}
+
+.col-head .menu-btn {
+  margin-left: 0;
+}
+
+.board-menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 220px;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--on-surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .3), 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--hover);
+}
+
+.menu-item svg {
+  flex: none;
+  color: var(--on-surface-var);
+}
+
+.menu-item.danger,
+.menu-item.danger svg {
+  color: var(--error);
+}
+
+/* an empty column says what to do – also while its last card is being dragged out.
+   Hidden when a card is visible or the drop placeholder is there; never a drop target itself
+   (removing it during dragover would cancel the drop). Also hidden while a new note is typed in the column */
+.col:has(.composer) .col-empty,
+.col-cards:has(.card:not(.dragging)) .col-empty,
+.col-cards:has(.card-ph) .col-empty {
+  display: none;
+}
+
+.col-empty {
+  /* exactly the height of a one-line card (12 + 20 + 12 px), so nothing shifts when the last card leaves */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 2px dashed var(--hover);
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: .6;
+  pointer-events: none;
+}
+
+/* own task composer, right in the column */
+/* a new note is typed in the place and the shape of the card it becomes: the same side margins as the cards
+   (10px), the same 10px gap to the card above (8 + the list's 2px) and the same inner padding (12 × 14px) */
+.composer {
+  margin: 8px 10px 12px;
+}
+
+.composer-input {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 8px;
+  outline: 2px solid var(--primary);
+  background: var(--card-bg);
+  color: var(--on-surface);
+  box-shadow: var(--card-shadow);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  resize: none;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.composer-actions .btn {
+  height: 32px;
+  padding: 0 14px;
+}
+
+.board .composer-actions .btn.text {
+  color: var(--fg);
+}
+
+/* ---- column types: a colored dot in the header ---- */
+
+.col-type {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.col-type-hold {
+  background: #9f8fef;
+}
+
+.col-type-todo {
+  background: #8c9bab;
+}
+
+.col-type-progress {
+  background: #579dff;
+}
+
+.col-type-done {
+  background: #4bce97;
+}
+
+.menu-heading {
+  padding: 8px 16px 4px;
+  color: var(--on-surface-var);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* an empty heading is a separator */
+.menu-heading:empty {
+  margin: 4px 0;
+  padding: 0;
+  border-top: 1px solid var(--outline-var);
+}
+
+/* ---- deadlines: the look depends on the column type and how close the date is ---- */
+
+.card-meta {
+  display: flex;
+  margin-top: 12px;
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: var(--col-bg);
+  color: var(--on-surface-var);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+/* the deadline is clickable: a click changes the date */
+.due:hover,
+.due:focus-visible {
+  filter: brightness(1.15);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* done – a calm green check; on hold – a gray pause, no urgency */
+.due-done {
+  background: rgba(34, 160, 107, .16);
+  color: #22a06b;
+}
+
+.due-hold {
+  opacity: .8;
+}
+
+/* to do – a colored outline */
+.due-in-todo.due-overdue {
+  border-color: #e2483d;
+  background: none;
+  color: #e2483d;
+}
+
+.due-in-todo.due-today {
+  border-color: #f38a3f;
+  background: none;
+  color: #f38a3f;
+}
+
+.due-in-todo.due-soon {
+  border-color: #cf9f02;
+  background: none;
+  color: #cf9f02;
+}
+
+/* in progress – filled, louder */
+.due-in-progress.due-overdue {
+  background: #c9372c;
+  color: #fff;
+}
+
+.due-in-progress.due-today {
+  background: #f38a3f;
+  color: #fff;
+}
+
+.due-in-progress.due-soon {
+  background: #f5cd47;
+  color: #533f04;
+}
+
+.due-quick {
+  margin: 4px 0 4px;
+}
+
+.field input[type="date"] {
+  cursor: pointer;
+}
+
+/* "Add description" on a Jira card: an icon in the top row next to ⋮, shows up with the card hover
+   (also in the ⋮ menu); the size of ⋮, so the row never overflows */
+.card-desc {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px 0 -4px auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--on-surface-var);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.card:hover .card-desc,
+.card-desc:focus-visible {
+  opacity: 1;
+}
+
+.card-desc:hover {
+  background: var(--hover);
+  color: var(--on-surface);
+}
+
+/* a long status ("PREP FOR DEVELOPMENT") shrinks with an ellipsis instead of pushing ⋮ out of the card */
+.card-top {
+  min-width: 0;
+}
+
+.card-top .st {
+  /* a smaller badge on cards: the summary below is what matters */
+  padding: 1px 5px;
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: .2px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* a column never scrolls sideways */
+.col-cards {
+  overflow-x: hidden;
+}
+
+.card-top .card-desc + .menu-btn {
+  margin-left: 0;
+}
+
+/* ---- linked Jira tasks and Confluence pages: one list under the text ---- */
+
+.card-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 10px -6px 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--hover);
+}
+
+/* a note without text: just its links – no empty line and no separator above them;
+   ⋮ sits next to the first link, which makes room for it */
+.note:has(> .card-title:empty) {
+  display: block;
+}
+
+.note:has(> .card-title:empty) .menu-btn {
+  position: absolute;
+  top: 13px;
+  right: 8px;
+  margin: 0;
+}
+
+.note:has(> .card-title:empty) + .card-links {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.note:has(> .card-title:empty) + .card-links .att:first-child {
+  margin-right: 22px;
+}
+
+.att {
+  position: relative;
+  border-radius: 6px;
+}
+
+.att:hover {
+  background: var(--hover);
+}
+
+.att a {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 28px 5px 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.att-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: 18px;
+}
+
+.att-task .att-icon {
+  color: #4bade8;
+}
+
+.att-pr .att-icon {
+  color: #2684ff;
+}
+
+.att-doc .att-icon {
+  color: var(--jira);
+}
+
+.att-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.att-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  line-height: 18px;
+}
+
+/* the status as quiet text with a colored dot – the summary below matters more */
+.att-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--on-surface-var);
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.att-status::before {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8c9bab;
+  content: "";
+}
+
+.att-status.att-indeterminate::before {
+  background: #579dff;
+}
+
+.att-status.att-done::before {
+  background: #4bce97;
+}
+
+.att-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.att-doc .att-title {
+  -webkit-line-clamp: 1;
+}
+
+.att .link-del {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  opacity: 0;
+}
+
+.att:hover .link-del {
+  opacity: .7;
+}
+
+/* a linked page of any site: its favicon */
+.att-icon .fav,
+.pick-row .fav {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+/* a task that is already on the board: the card blinks once */
+.card.flash {
+  animation: card-flash 1s ease-out;
+}
+
+@keyframes card-flash {
+  0%, 40% {
+    box-shadow: 0 0 0 3px var(--primary);
+  }
+
+  100% {
+    box-shadow: var(--card-shadow);
+  }
+}
+
+/* ---- Inbox column: Atlassian notifications ---- */
+
+.inbox-head-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--on-surface-var);
+}
+
+.inbox-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+}
+
+.inbox-refresh.spinning svg {
+  animation: inbox-spin 1s linear infinite;
+}
+
+@keyframes inbox-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.col-inbox .col-cards {
+  padding-bottom: 10px;
+}
+
+.inbox-item {
+  display: block;
+  text-decoration: none;
+}
+
+.inbox-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.inbox-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: 18px;
+}
+
+.inbox-jira {
+  color: #4bade8;
+}
+
+.inbox-confluence {
+  color: var(--jira);
+}
+
+.inbox-bitbucket {
+  color: #2684ff;
+}
+
+.inbox-msg {
+  flex: 1;
+  min-width: 0;
+  color: var(--on-surface-var);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* unread: a dot and a brighter text, like the bell */
+.inbox-item.unread .inbox-msg {
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+.inbox-item.unread::after {
+  position: absolute;
+  top: 18px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  content: "";
+}
+
+.inbox-item.unread:hover::after {
+  display: none;
+}
+
+.inbox-hide {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -2px -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.inbox-item:hover .inbox-hide {
+  opacity: .7;
+}
+
+.inbox-hide:hover {
+  background: var(--hover);
+  opacity: 1;
+}
+
+.inbox-title {
+  display: -webkit-box;
+  margin: 4px 0 0 24px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.inbox-time {
+  margin: 4px 0 0 24px;
+  color: var(--on-surface-var);
+  font-size: 12px;
+}
+
+/* the empty Inbox shows its text even with no card being dragged */
+.col-cards .inbox-empty {
+  display: flex;
+}
+
+.inbox-msg-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 4px;
+  color: var(--on-surface-var);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* a pull request card: the Bitbucket icon before "repo #7" */
+.pr-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  margin-right: -2px;
+  color: #2684ff;
+}

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Tab</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon16.png">
+  <link rel="stylesheet" href="css/newtab.css">
+  <link rel="stylesheet" href="css/board.css">
+  <link rel="stylesheet" href="css/compact.css">
+  <!-- in <head>: applies the saved background before the first paint, so it doesn't flash -->
+  <script src="js/theme.js"></script>
+</head>
+<body>
+
+<header>
+  <a href="https://mail.google.com" data-i18n="gmail">Gmail</a>
+  <a href="https://www.google.com/imghp" data-i18n="images">Images</a>
+  <button class="icon-btn" id="setBtn" data-i18n-title="customize">
+    <span class="dots"><i></i><i></i><i></i></span>
+  </button>
+  <img class="avatar" id="avatar" alt="">
+</header>
+
+<main>
+  <div class="brand">
+    <img class="logo" alt="Google" width="272" height="92"
+         src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png">
+    <div class="tagline" id="tagline" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+      <span data-i18n="enhancedWithAtlassian">enhanced with Atlassian</span>
+    </div>
+    <!-- compact view: "Google × Atlassian" in one line -->
+    <span class="brand-x">× Atlassian</span>
+  </div>
+
+  <div class="smart" id="smart">
+    <div class="box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#5f6368"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"/></svg>
+      <input id="q" data-i18n-ph="searchPlaceholder" autocomplete="off" spellcheck="false">
+      <button type="button" class="ibtn" id="micBtn" data-i18n-title="voice">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#202124"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 0 0-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 0 0 5.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg>
+      </button>
+      <button type="button" class="ibtn" id="lensBtn" data-i18n-title="lens">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 9V6a2 2 0 0 1 2-2h3" fill="none" stroke="#ea4335" stroke-width="2" stroke-linecap="round"/><path d="M15 4h3a2 2 0 0 1 2 2v3" fill="none" stroke="#4285f4" stroke-width="2" stroke-linecap="round"/><path d="M20 15v3a2 2 0 0 1-2 2h-3" fill="none" stroke="#34a853" stroke-width="2" stroke-linecap="round"/><path d="M9 20H6a2 2 0 0 1-2-2v-3" fill="none" stroke="#fbbc04" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.2" fill="#4285f4"/></svg>
+      </button>
+    </div>
+    <div class="dd" id="dd"></div>
+  </div>
+
+  <div class="shortcuts" id="shortcuts"></div>
+</main>
+
+<!-- Kanban board: bottom half of the page, can be expanded to the whole page (board.js) -->
+<section class="board" id="board" hidden>
+  <!-- floats in the bottom right corner, in the page and in full screen -->
+  <button type="button" class="board-btn" id="bExpand"></button>
+  <div class="board-cols" id="bCols"></div>
+</section>
+
+<!-- Shortcut: add / edit -->
+<dialog id="addDlg" class="m3">
+  <form method="dialog" id="addForm" novalidate>
+    <h2 id="addTitle" data-i18n="addShortcut">Add shortcut</h2>
+
+    <div class="field">
+      <label for="addName" data-i18n="name">Name</label>
+      <input id="addName" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="addUrl" data-i18n="url">URL</label>
+      <input id="addUrl" placeholder="https://" autocomplete="off" spellcheck="false">
+      <div class="err" data-i18n="urlRequired"></div>
+    </div>
+
+    <div class="actions">
+      <span>
+        <button type="button" class="btn text" id="addRemove" data-i18n="remove" hidden>Remove</button>
+      </span>
+      <span>
+        <button type="button" class="btn text" id="addCancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn filled" id="addOk" data-i18n="done">Done</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<!-- Settings: "General", "Board" and "Atlassian" tabs -->
+<dialog id="setDlg" class="m3 wide">
+  <form method="dialog" id="setForm" novalidate>
+    <div class="head">
+      <h2 id="sTitle">Settings</h2>
+      <button type="button" class="icon-btn small" id="sClose" data-i18n-title="close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+
+    <p class="welcome" id="sWelcome" data-i18n="welcomeText" hidden></p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" data-tab="general" data-i18n="tabGeneral">General</button>
+      <button type="button" role="tab" class="tab" data-tab="board" data-i18n="tabBoard">Board</button>
+      <button type="button" role="tab" class="tab" data-tab="atlassian" data-i18n="tabAtlassian">Atlassian</button>
+    </div>
+
+    <div class="body">
+
+      <!-- ===== General ===== -->
+      <div class="panel" data-tab="general">
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span data-i18n="profile">Profile</span>
+          </div>
+          <div class="profile">
+            <img class="preview" id="sAvatar" alt="">
+            <div class="grow">
+              <div class="field">
+                <label for="sName" data-i18n="yourName">Name</label>
+                <input id="sName" data-i18n-ph="optional" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="sEmail" data-i18n="email">Email</label>
+                <input id="sEmail" type="email" placeholder="you@example.com" autocomplete="off" spellcheck="false">
+                <div class="help" data-i18n="emailHint"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+            <span data-i18n="background">Background</span>
+          </div>
+          <div class="swatches" id="sBg"></div>
+          <div class="help" data-i18n="bgHint"></div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v4h18V5H3zm0 6v8h7v-8H3zm9 0v8h9v-8h-9z"/></svg>
+            <span data-i18n="layout">Layout</span>
+          </div>
+          <label class="check"><input type="checkbox" id="sCompact"><span data-i18n="compactView">Compact view</span></label>
+          <div class="help" data-i18n="compactHint"></div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+            <span data-i18n="language">Language</span>
+          </div>
+          <div class="row">
+            <div class="field grow">
+              <label for="sLang" data-i18n="pageLang">Page language</label>
+              <select id="sLang"></select>
+            </div>
+            <div class="field grow">
+              <label for="sVoice" data-i18n="voiceLang">Voice search language</label>
+              <select id="sVoice"></select>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+            <span data-i18n="shortcuts">Shortcuts</span>
+          </div>
+          <label class="check"><input type="checkbox" id="sShortcuts"><span data-i18n="shortcutsShow">Show shortcuts</span></label>
+          <div id="shortcutsOptions">
+            <div class="btn-row">
+              <button type="button" class="btn tonal" id="sTopSites" data-i18n="shortcutsFromTop">Use most visited</button>
+              <button type="button" class="btn tonal" id="sImport" data-i18n="shortcutsImport">Import</button>
+              <button type="button" class="btn tonal" id="sExport" data-i18n="shortcutsExport">Export</button>
+              <input type="file" id="sImportFile" accept=".json,application/json" hidden>
+            </div>
+            <div class="help" id="sLinksMsg" data-i18n="shortcutsHint"></div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ===== Atlassian: fields and checkboxes appear only for connected services ===== -->
+      <div class="panel" data-tab="board" hidden>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v16H4V4zm6 0h4v10h-4V4zm6 0h4v13h-4V4z"/></svg>
+            <span data-i18n="boardTitle">Board</span>
+          </div>
+          <label class="check"><input type="checkbox" id="sBoard"><span data-i18n="boardShow">Show the board</span></label>
+          <div class="help" data-i18n="boardHint"></div>
+          <div class="board-only" id="boardLockRow">
+            <label class="check"><input type="checkbox" id="sBoardLock"><span data-i18n="boardLock">Lock columns</span></label>
+            <div class="help" data-i18n="boardLockHint"></div>
+          </div>
+        </section>
+
+        <section class="board-only">
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12h-4a3 3 0 0 1-6 0H5V5h14v10z"/></svg>
+            <span data-i18n="boardInbox">Inbox</span>
+          </div>
+          <label class="check"><input type="checkbox" id="sInbox"><span data-i18n="boardInboxShow">Show the Inbox column</span></label>
+          <div class="checks" id="inboxSrc">
+            <label class="check"><input type="checkbox" data-name="mentions"><span data-i18n="inbox_mentions">Mentions of me</span></label>
+            <label class="check"><input type="checkbox" data-name="jira"><span data-i18n="inbox_jira">Jira: changes in my tasks</span></label>
+            <label class="check"><input type="checkbox" data-name="confluence"><span data-i18n="inbox_confluence">Confluence: pages I watch</span></label>
+            <label class="check"><input type="checkbox" data-name="views"><span data-i18n="inbox_views">Confluence: who viewed my pages</span></label>
+            <label class="check"><input type="checkbox" data-name="bitbucket"><span data-i18n="inbox_bitbucket">Bitbucket: pull requests</span></label>
+            <label class="check"><input type="checkbox" data-name="unread"><span data-i18n="inbox_unread">Only unread</span></label>
+          </div>
+          <div class="help" data-i18n="boardInboxHint"></div>
+          <div class="help" id="inboxNoSite" data-i18n="boardInboxNoSite" hidden></div>
+        </section>
+
+        <section class="board-only">
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+            <span data-i18n="boardTransfer">Board backup</span>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn tonal" id="sBoardImport" data-i18n="shortcutsImport">Import</button>
+            <button type="button" class="btn tonal" id="sBoardExport" data-i18n="shortcutsExport">Export</button>
+            <input type="file" id="sBoardFile" accept=".json,application/json" hidden>
+          </div>
+          <div class="help" id="sBoardMsg" data-i18n="boardTransferHint"></div>
+        </section>
+
+      </div>
+
+      <div class="panel" data-tab="atlassian" hidden>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            <span data-i18n="connections">Connections</span>
+          </div>
+
+          <div class="row">
+            <div class="field grow">
+              <label for="sJira" data-i18n="jiraUrl">Jira/Confluence address</label>
+              <input id="sJira" placeholder="https://company.atlassian.net" autocomplete="off" spellcheck="false">
+              <div class="err" data-i18n="jiraUrlInvalid"></div>
+            </div>
+            <div class="field key">
+              <label for="sKey" data-i18n="projectKey">Project key</label>
+              <input id="sKey" placeholder="SF" autocomplete="off" spellcheck="false" maxlength="10">
+              <div class="err" data-i18n="projectKeyInvalid"></div>
+            </div>
+          </div>
+          <div class="help" id="sPreview"></div>
+          <div class="help" data-i18n="jiraUrlHint"></div>
+
+          <div class="field spaced">
+            <label for="sSpace" data-i18n="confSpace">Priority Confluence space</label>
+            <input id="sSpace" placeholder="SPACEKEY" autocomplete="off" spellcheck="false">
+            <div class="help" data-i18n="confSpaceHint"></div>
+            <div class="err" data-i18n="confSpaceInvalid"></div>
+          </div>
+
+          <div class="field spaced">
+            <label for="sBb" data-i18n="bbWorkspace">Bitbucket workspace</label>
+            <input id="sBb" placeholder="my-workspace" autocomplete="off" spellcheck="false">
+            <div class="help" data-i18n="bbWorkspaceHint"></div>
+            <div class="err" data-i18n="bbWorkspaceInvalid"></div>
+          </div>
+
+          <div class="field spaced">
+            <label for="sBbRepos" data-i18n="bbRepos">Repositories for pull request search</label>
+            <input id="sBbRepos" placeholder="salesforce, mobile-app" autocomplete="off" spellcheck="false">
+            <div class="help" data-i18n="bbReposHint"></div>
+            <div class="err" data-i18n="bbReposInvalid"></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14"/></svg>
+            <span data-i18n="quickSearch">Quick search</span>
+          </div>
+          <div class="src-group">
+            <div class="src-title">
+              <span data-i18n="historyQuickSearch">History Quick Search</span>
+              <span class="src-sub" data-i18n="historyQuickSearchHint"></span>
+            </div>
+            <div class="checks" id="focusSrc"></div>
+          </div>
+          <div class="src-group">
+            <div class="src-title">
+              <span data-i18n="autocompleteQuickSearch">Autocomplete Quick Search</span>
+              <span class="src-sub" data-i18n="autocompleteQuickSearchHint"></span>
+            </div>
+            <div class="checks" id="typeSrc"></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+            <span data-i18n="transfer">Transfer settings</span>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn tonal" id="sAtlImport" data-i18n="shortcutsImport">Import</button>
+            <button type="button" class="btn tonal" id="sAtlExport" data-i18n="shortcutsExport">Export</button>
+            <input type="file" id="sAtlFile" accept=".json,application/json" hidden>
+          </div>
+          <div class="help" id="sAtlMsg" data-i18n="transferHint"></div>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn text" id="sReset" data-i18n="reset">Reset to defaults</button>
+      <span>
+        <button type="button" class="btn text" id="sCancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn filled" id="sSave" data-i18n="save">Save</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<!-- Board: add one of my Jira tasks to a column -->
+<dialog id="pickDlg" class="m3 pick">
+  <form method="dialog">
+    <div class="head">
+      <h2 id="pickTitle"></h2>
+      <button type="button" class="icon-btn small" id="pickClose" data-i18n-title="close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <input id="pickFilter" data-i18n-ph="boardPickFilter" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="pick-list" id="pickList"></div>
+  </form>
+</dialog>
+
+<!-- Board: link a Jira task or any page to a card (my tasks, history, Confluence, a pasted address) -->
+<dialog id="docDlg" class="m3 pick">
+  <form method="dialog">
+    <div class="head">
+      <h2 id="docTitle"></h2>
+      <button type="button" class="icon-btn small" id="docClose" data-i18n-title="close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <input id="docInput" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="pick-list" id="docList"></div>
+  </form>
+</dialog>
+
+<!-- Board: deadline of a card -->
+<dialog id="dueDlg" class="m3">
+  <form method="dialog" id="dueForm">
+    <h2 id="dueTitle"></h2>
+    <div class="field">
+      <label for="dueInput" data-i18n="boardDueDate">Date</label>
+      <input type="date" id="dueInput">
+    </div>
+    <div class="btn-row due-quick">
+      <button type="button" class="btn tonal" data-days="0" data-i18n="boardDueToday">Today</button>
+      <button type="button" class="btn tonal" data-days="1" data-i18n="boardDueTomorrow">Tomorrow</button>
+      <button type="button" class="btn tonal" data-days="7" data-i18n="boardDueWeek">In a week</button>
+    </div>
+    <div class="actions">
+      <span>
+        <button type="button" class="btn text" id="dueClear" data-i18n="boardDueClear">Remove deadline</button>
+      </span>
+      <span>
+        <button type="button" class="btn text" id="dueCancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn filled" data-i18n="save">Save</button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirmation, shown on top of the settings -->
+<dialog id="confirmDlg" class="m3">
+  <form method="dialog">
+    <h2 id="cTitle"></h2>
+    <p class="confirm-text" id="cText"></p>
+    <div class="actions">
+      <span></span>
+      <span>
+        <button value="cancel" class="btn text" data-i18n="cancel">Cancel</button>
+        <button value="ok" class="btn filled" id="cOk"></button>
+      </span>
+    </div>
+  </form>
+</dialog>
+
+<!-- plain scripts sharing one global scope, in dependency order; main.js starts the page -->
+<script src="js/i18n.js"></script>
+<script src="js/core.js"></script>
+<script src="js/atlassian.js"></script>
+<script src="js/shortcuts.js"></script>
+<script src="js/search.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/board.js"></script>
+<script src="js/board-actions.js"></script>
+<script src="js/board-inbox.js"></script>
+<script src="js/board-pickers.js"></script>
+<script src="js/board-backup.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
