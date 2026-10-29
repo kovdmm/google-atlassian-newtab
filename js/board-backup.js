@@ -16,16 +16,18 @@ function normalizeCard(c) {
       : null)
     .filter(Boolean);
   const due = isIsoDate(c.due) ? { due: c.due } : {};
-  if (isTaskKey(c.key)) return jiraCard(c.key, { links, ...due });
+  const text = typeof c.text === "string" && c.text.trim() ? { text: c.text.slice(0, 500) } : {};
+  if (isTaskKey(c.key)) return jiraCard(c.key, { links, ...due, ...text });
   if (typeof c.pr === "string" && /^[^/]+\/[^/]+\/\d+$/.test(c.pr)) {
     const url = /^https:\/\/bitbucket\.org\//.test(c.url) ? c.url : undefined;
     return prCard(c.pr, url, String(c.title || ""), ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"].includes(c.state) ? c.state : "",
-      { links, ...due });
+      { links, ...due, ...text });
   }
-  // a note is its text and its links: with neither it is not a card
-  if (typeof c.title !== "string" || (!c.title.trim() && !links.length)) return null;
-  return { id: String(c.id || "own-" + newId()), title: c.title.slice(0, 500),
-    links, ...due };
+  // a note is its text and its links: with neither it is not a card. Files exported before cards had "text" keep
+  // a note's text in "title" – such notes go through the same migration as a saved board (migrateBoard)
+  const legacy = typeof c.text !== "string" && typeof c.title === "string";
+  const note = { id: String(c.id || "own-" + newId()), ...(legacy ? { title: c.title.slice(0, 500) } : text), links, ...due };
+  return note.text || note.title?.trim() || links.length ? note : null;
 }
 
 function normalizeBoard(data) {
@@ -61,6 +63,7 @@ $("sBoardFile").onchange = async e => {
   if (current && countCards(current) &&
       !(await confirmDialog(t("boardImportTitle"), t("boardImportText", countCards(current)), t("boardImportOk")))) return;
   board = imported;
+  migrateBoard();
   await saveBoard();
   if (settings.board) {
     renderBoard();

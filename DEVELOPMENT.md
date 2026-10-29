@@ -8,7 +8,7 @@ A Chrome MV3 extension that replaces the new tab page. No build step: plain HTML
 - `newtab.html` – the page markup, all dialogs included.
 - `_locales/` – the extension name and description for the Chrome Web Store and chrome://extensions.
 - `tools/make_icons.py` – generates `icons/`.
-- `docs/board-states.md` – board card states and the buttons that turn one into another (Mermaid source); `docs/board-states.svg` is the same picture rendered. Update both when a conversion changes.
+- `docs/board-states.md` – board card kinds and what each button does to them (Mermaid source); `docs/board-states.svg` is the same picture rendered. Update both when card behavior changes.
 
 Styles, in cascade order (later files win on equal specificity):
 
@@ -33,7 +33,7 @@ Scripts are plain scripts that share one global scope. `newtab.html` loads them 
 - One source of truth for a setting: add it to `DEFAULT_SETTINGS` in `core.js` with a comment. A plain on/off setting also needs one line in `CHECKBOXES` in `settings.js` and the checkbox in `newtab.html`.
 - Texts go to `js/i18n.js` in all three languages; markup uses `data-i18n` and code uses `t(key, ...args)`.
 - Every Atlassian request goes through `apiFetch()`, which returns `null` when nothing was sent (limit or pause). Results that came from `null` are not cached.
-- Board cards are created only with `jiraCard()`, `prCard()` or `noteCard()`. Every kind of card can link Jira tasks and pages; both go to one list, `links`, in the order they were linked (the data model is in the header of `board.js`). A conversion keeps the card's links and deadline with `carryOver()`. After adding or converting a card, call `update()` and then `refreshFor(card)`. A note lives while it has text or links; whatever takes away the last of them removes the note (`isEmptyNote()`).
+- Board cards are created only with `jiraCard()`, `prCard()` or `noteCard()`. Every kind of card can link Jira tasks and pages; both go to one list, `links`, in the order they were linked (the data model is in the header of `board.js`). Every card can have its own text (`text`): a note's text or a Jira or PR card's description. A card never changes its kind after it is created – editing changes only the text. After adding a card, call `update()` and then `refreshFor(card)`. A card with nothing left – no task or PR of its own, no text, no links – is removed (`isEmptyCard()`). Data saved by earlier versions is brought to this model by `migrateBoard()`, on load and on import.
 - A user-visible error offers the one button that helps: `accessNotice()` gives the text and the button, `fixAccess()` handles the click.
 - HTML is built with template strings. Every value from data or the network goes through `esc()`.
 - Code comments are in English; there is no linter, so match the surrounding style.

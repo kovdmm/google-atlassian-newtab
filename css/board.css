@@ -283,6 +283,21 @@
   overflow-wrap: anywhere;
 }
 
+/* the user's description on a Jira or PR card: under the summary, set off by a thin line on the left */
+.card-title + .card-text,
+.card-title + .card-edit {
+  margin-top: 8px;
+}
+
+.card-title + .card-text {
+  padding-left: 8px;
+  border-left: 2px solid var(--hover);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 
 
 .link-del {
@@ -674,7 +689,7 @@ dialog.m3.pick .head {
   cursor: pointer;
 }
 
-/* "Add description" on a Jira card: an icon in the top row next to ⋮, shows up with the card hover
+/* "Add description" on a Jira or PR card: an icon in the top row next to ⋮, shows up with the card hover
    (also in the ⋮ menu); the size of ⋮, so the row never overflows */
 .card-desc {
   display: grid;

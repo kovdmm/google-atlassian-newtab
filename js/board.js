@@ -7,7 +7,7 @@
 //
 // The board is split into files that share one global scope:
 //   board.js          – the model, card constructors, rendering, ⋮ menus, columns, full screen, deadlines
-//   board-actions.js  – own tasks and their conversions, clicks, drag and drop
+//   board-actions.js  – adding notes, editing card text, clicks, drag and drop
 //   board-inbox.js    – the Inbox column (Atlassian notifications)
 //   board-pickers.js  – "+ From Jira" and "Add link" dialogs
 //   board-backup.js   – export / import of the whole board (settings → Board)
@@ -15,11 +15,14 @@
 // board = { expanded, columns: [{ id, name, type, cards: [card] }] }
 // type – what the column means: hold | todo | progress | done (drives how deadlines look)
 // card – one of (see the constructors below):
-//   Jira task:     { key, summary, links, due }
-//   pull request:  { id: "pr:ws/repo/id", pr: "ws/repo/id", url, title, state, links, due }
-//   note:          { id: "own-…", title, links, due }
+//   Jira task:     { key, summary, text?, links, due }
+//   pull request:  { id: "pr:ws/repo/id", pr: "ws/repo/id", url, title, state, text?, links, due }
+//   note:          { id: "own-…", text, links, due }
+// A card never changes its kind: a Jira card stays that task, a PR card – that pull request, a note – a note.
+// text – what the user wrote: a note's text, a description of a Jira or PR card;
 // due: "YYYY-MM-DD"; links – what the card links to, in the order it was linked: [{ key } | { title, url, state? }],
-// a Jira task or a page (a PR keeps its last known state)
+// a Jira task or a page (a PR keeps its last known state).
+// A card with nothing left – no task or PR of its own, no text, no links – goes (see isEmptyCard)
 let board = null;
 let composerColumn = null; // column whose "own task" composer is open
 let dueCard = null;    // card whose deadline is being set
@@ -90,18 +93,20 @@ function update() {
   renderBoard();
 }
 
-// short name of a card for dialog titles; a note without text is named by its first link
+// short name of a card for dialog titles: the task, "repo #7", the note text or, without text, its first link
 function cardName(card) {
-  const name = card.key || card.title || card.links?.[0]?.key || card.links?.[0]?.title || "";
+  const name = card.key || (card.pr && card.pr.replace(/^[^/]+\/([^/]+)\/(\d+)$/, "$1 #$2")) || card.text ||
+    card.links?.[0]?.key || card.links?.[0]?.title || "";
   return name.length > 30 ? name.slice(0, 30) + "…" : name;
 }
 
 // =====================================================================================
-// Cards: constructors and conversions between the kinds
+// Cards: constructors
 // =====================================================================================
 
-// What a card keeps when it turns into another kind: its links and its deadline
-const carryOver = (from = {}) => ({ links: [...(from.links || [])], ...(from.due && { due: from.due }) });
+// What a card takes from the one it is made of (a migrated note, an imported card): text, links, deadline
+const carryOver = (from = {}) =>
+  ({ ...(from.text && { text: from.text }), links: [...(from.links || [])], ...(from.due && { due: from.due }) });
 
 // a task card never links itself
 function jiraCard(key, from) {
@@ -110,7 +115,7 @@ function jiraCard(key, from) {
   return card;
 }
 
-const noteCard = (title, from) => ({ id: "own-" + newId(), title, ...carryOver(from) });
+const noteCard = (text, from) => ({ id: "own-" + newId(), ...carryOver(from), text });
 
 // title and state are the last known ones (no blink after a reload), refreshed from Bitbucket;
 // from – the card it is made of (see carryOver); a PR card never links itself
@@ -121,8 +126,7 @@ function prCard(ref, url, title = "", state = "", from) {
   return card;
 }
 
-// The card takes the place of another one in its column
-const replaceCard = (col, card, next) => { col.cards[col.cards.indexOf(card)] = next; };
+const isEmptyCard = card => !card.key && !card.pr && !card.text && !card.links?.length;
 
 // A card just added or converted: load what the board doesn't know about it yet
 function refreshFor(card) {
@@ -157,13 +161,16 @@ async function applyBoard() {
   if (!on) return;
   board ??= await store.get("board", null) || defaultBoard();
   board.columns.forEach(col => { col.type ??= guessColumnType(col.name); });
-  if (migrateLinks() | migratePrNotes()) saveBoard();
+  if (migrateBoard()) saveBoard();
   await restoreIssues();
   await restoreInbox();
   renderBoard();
   refreshCardStatuses();
   loadInbox();
 }
+
+// Boards saved by earlier versions (also from an imported file) – brought to the current model
+const migrateBoard = () => migrateLinks() | migratePrNotes() | migrateNoteText();
 
 // Boards saved when tasks (links: keys) and pages (docs) were two lists: one list, tasks first as they were shown
 const mergedLinks = card => [...(card.links || []).map(l => (typeof l === "string" ? { key: l } : l)), ...(card.docs || [])];
@@ -187,10 +194,27 @@ function migratePrNotes() {
   board.columns.forEach(col => {
     col.cards = col.cards.map(card => {
       const doc = card.links?.length === 1 && card.links[0];
-      const ref = doc?.url && !card.key && !card.pr && prRefOf(doc.url);
+      const ref = doc?.url && !card.key && !card.pr && card.title && prRefOf(doc.url);
       if (!ref || plain(card.title) !== plain(doc.title) || prCardsOnBoard().has(ref)) return card;
       changed = true;
       return { ...prCard(ref, doc.url, plain(doc.title)), ...(card.due && { due: card.due }) };
+    });
+  });
+  return changed;
+}
+
+// Notes saved when their text was "title" and a Jira card's description was a note linked to that one task:
+// the text moves to "text"; a note linked to exactly one task (not a card yet) becomes that Jira card with the text
+function migrateNoteText() {
+  let changed = false;
+  board.columns.forEach(col => {
+    col.cards = col.cards.map(card => {
+      if (card.key || card.pr || card.title === undefined) return card;
+      changed = true;
+      const { title, ...rest } = card;
+      const note = { ...rest, ...(title.trim() && { text: title }) };
+      const keys = linkedKeys(note);
+      return keys.length === 1 && !cardsOnBoard().has(keys[0]) ? jiraCard(keys[0], note) : note;
     });
   });
   return changed;
@@ -333,6 +357,11 @@ function taskAttachmentHtml(key, i, close) {
       </div>`;
 }
 
+// The user's text on a Jira or PR card, under the summary; "Add description" next to ⋮ while there is none
+const textHtml = card => (card.text ? `<div class="card-text">${esc(card.text)}</div>` : "");
+const descButtonHtml = card => (card.text ? "" :
+  `<button type="button" class="card-desc" title="${esc(t("boardAddDescription"))}" aria-label="${esc(t("boardAddDescription"))}">${BOARD_ICONS.addNote}</button>`);
+
 function cardHtml(card, columnId, columnType) {
   const issue = card.key ? issueOf(card.key) : null;
   const status = issueBadge(issue);
@@ -343,9 +372,9 @@ function cardHtml(card, columnId, columnType) {
       ${card.key
         ? `<div class="card-top"><span class="card-key">${esc(card.key)}</span>${status}` +
           // in the top row, next to ⋮: appears on hover and takes no extra height
-          `<button type="button" class="card-desc" title="${esc(t("boardAddDescription"))}" aria-label="${esc(t("boardAddDescription"))}">${BOARD_ICONS.addNote}</button>${menuBtn}</div>
-      <div class="card-title">${esc(issue?.summary || card.summary || "")}</div>`
-        : `<div class="note">${menuBtn}<div class="card-title">${esc(card.title)}</div></div>`}
+          `${descButtonHtml(card)}${menuBtn}</div>
+      <div class="card-title">${esc(issue?.summary || card.summary || "")}</div>${textHtml(card)}`
+        : `<div class="note">${menuBtn}<div class="card-title card-text">${esc(card.text || "")}</div></div>`}
       ${attachmentsHtml(card)}
       ${dueRowHtml(card, columnType)}
     </div>`;
@@ -357,8 +386,8 @@ function prCardHtml(card, columnId, columnType, menuBtn) {
   const badge = prBadge(prOf(card.pr)?.state || card.state);
   return `
     <div class="card pr-card" draggable="true" data-card="${esc(cardId(card))}" data-col="${columnId}">
-      <div class="card-top"><span class="pr-icon">${BOARD_ICONS.pr}</span><span class="card-key">${esc(repo)} #${esc(id)}</span>${badge}${menuBtn}</div>
-      <div class="card-title">${esc(prOf(card.pr)?.title || card.title || "")}</div>
+      <div class="card-top"><span class="pr-icon">${BOARD_ICONS.pr}</span><span class="card-key">${esc(repo)} #${esc(id)}</span>${badge}${descButtonHtml(card)}${menuBtn}</div>
+      <div class="card-title">${esc(prOf(card.pr)?.title || card.title || "")}</div>${textHtml(card)}
       ${attachmentsHtml(card)}
       ${dueRowHtml(card, columnType)}
     </div>`;
@@ -464,9 +493,9 @@ function columnMenu(button, col) {
 function cardMenu(button, col, card) {
   openMenu(button, [
     ...(card.key && hasJira() ? [{ icon: BOARD_ICONS.open, label: t("boardOpenTask"), run: () => openTask(card.key, false) }] : []),
-    ...(card.key ? [{ icon: BOARD_ICONS.edit, label: t("boardAddDescription"), run: () => addDescription(col, card) }] : []),
     ...(card.pr ? [{ icon: BOARD_ICONS.open, label: t("boardOpenPr"), run: () => openUrl(card.url) }] : []),
-    ...(card.key || card.pr ? [] : [{ icon: BOARD_ICONS.edit, label: t("boardEditText"), run: () => editOwnTask(button.closest(".card")) }]),
+    { icon: BOARD_ICONS.edit, label: t(!card.key && !card.pr ? "boardEditText" : card.text ? "boardEditDescription" : "boardAddDescription"),
+      run: () => editCardText(button.closest(".card")) },
     { heading: "" },
     { icon: BOARD_ICONS.link, label: t("boardAddDoc"), run: () => openDocDialog(card) },
     { heading: "" },

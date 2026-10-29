@@ -1,4 +1,4 @@
-// Board: what the user does with cards – own tasks and their conversions, clicks, drag and drop.
+// Board: what the user does with cards – adding notes, editing card text, clicks, drag and drop.
 
 // =====================================================================================
 // Own tasks: a composer right in the column (Enter – add and keep writing, Esc – close)
@@ -52,14 +52,18 @@ function addOwnTask(col, text) {
   refreshFor(card);
 }
 
-// Note text: edited in place. Enter – save, Shift+Enter – new line, Esc – cancel.
-// onEmpty – called instead of saving when the text ends up empty or the edit is cancelled (used to undo a conversion)
-function editOwnTask(cardEl, { placeholder = "", onEmpty = null } = {}) {
-  const card = findCard(columnOf(cardEl.dataset.col), cardEl.dataset.card);
-  const titleEl = cardEl.querySelector(".card-title");
+// The card's own text, edited in place: a note's text or the description of a Jira or PR card – it is only text,
+// the card stays what it is. Enter – save, Shift+Enter – new line, Esc – cancel.
+// A card left with nothing (see isEmptyCard) goes
+function editCardText(cardEl) {
+  const col = columnOf(cardEl.dataset.col), card = findCard(col, cardEl.dataset.card);
+  const placeholder = card.key || card.pr ? t("boardDescPlaceholder", cardName(card)) : "";
   const input = Object.assign(document.createElement("textarea"),
-    { className: "card-edit", value: card.title, rows: 3, maxLength: 500, placeholder });
-  titleEl.replaceWith(input);
+    { className: "card-edit", value: card.text || "", rows: 3, maxLength: 500, placeholder });
+  // a note always has its text block; a Jira or PR card gets the box under its summary
+  const textEl = cardEl.querySelector(".card-text");
+  if (textEl) textEl.replaceWith(input);
+  else cardEl.querySelector(".card-title").after(input);
   cardEl.draggable = false;
   input.focus();
   input.select();
@@ -67,61 +71,19 @@ function editOwnTask(cardEl, { placeholder = "", onEmpty = null } = {}) {
   const finish = save => {
     if (done) return;
     done = true;
-    const text = input.value.trim();
-    if (onEmpty && (!save || !text)) return onEmpty();
-    const col = columnOf(cardEl.dataset.col);
-    if (save && !text) return removeDescription(col, card);
-    // the text became a pull request or a Jira task link: the note turns into that card, keeping its links and
-    // deadline – unless that PR or task is already a card
-    const ref = save && prOfText(text);
-    const key = save && !ref && ticketOfText(text);
-    const next = ref && !prCardsOnBoard().has(ref) ? prCard(ref, text, "", "", card)
-      : key && !cardsOnBoard().has(key) ? jiraCard(key, card)
-      : null;
-    if (next) replaceCard(col, card, next);
-    else if (save && text) card.title = text;
+    if (save) {
+      const text = input.value.trim();
+      if (text) card.text = text;
+      else delete card.text;
+      if (isEmptyCard(card)) col.cards = col.cards.filter(c => c !== card);
+    }
     update();
-    refreshFor(next);
   };
   input.addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); finish(true); }
     if (e.key === "Escape") { e.stopPropagation(); finish(false); }
   });
   input.addEventListener("blur", () => finish(true));
-}
-
-// A note is its text and its links: with neither left it goes (a deadline alone doesn't keep it)
-const isEmptyNote = card => !card.key && !card.pr && !card.title && !card.links?.length;
-
-// The text of a note erased: the first Jira task or pull request it links to (in the order they were linked) turns
-// into the card, keeping the other links and the deadline – unless that task or PR is already a card elsewhere.
-// A note linking only pages stays, just without text; a note with nothing linked goes
-function removeDescription(col, card) {
-  const first = (card.links || []).find(l => l.key || prRefOf(l.url)), ref = first && !first.key && prRefOf(first.url);
-  const next = first?.key && !cardsOnBoard().has(first.key) ? jiraCard(first.key, card)
-    : ref && !prCardsOnBoard().has(ref) ? prCard(ref, first.url, first.title, first.state, card)
-    : null;
-  card.title = "";
-  if (next) replaceCard(col, card, next);
-  else if (isEmptyNote(card)) col.cards.splice(col.cards.indexOf(card), 1);
-  update();
-  refreshFor(next);
-}
-
-// "+ Add description" on a Jira card: the card becomes a note linked to that task, in the same place,
-// keeping its deadline, linked tasks and pages. An empty description or Esc turns it back into the Jira card
-function addDescription(col, card) {
-  const note = { id: "own-" + newId(), title: "", ...carryOver(card), links: [{ key: card.key }, ...(card.links || [])] };
-  replaceCard(col, card, note);
-  renderBoard();
-  const noteEl = $("bCols").querySelector(`.card[data-card="${note.id}"]`);
-  editOwnTask(noteEl, {
-    placeholder: t("boardDescPlaceholder", card.key),
-    onEmpty: () => {
-      replaceCard(col, note, card);
-      update();
-    },
-  });
 }
 
 // =====================================================================================
@@ -157,13 +119,13 @@ $("bCols").addEventListener("click", e => {
   if (!cardEl || cardEl.querySelector(".card-edit")) return;
   const card = findCard(col, cardEl.dataset.card);
   if (e.target.closest(".card-menu")) return cardMenu(e.target.closest(".card-menu"), col, card);
-  if (e.target.closest(".card-desc")) return addDescription(col, card);
+  if (e.target.closest(".card-desc")) return editCardText(cardEl);
   if (e.target.closest(".due")) return openDueDialog(card);
   const linkDel = e.target.closest(".link-del");
   if (linkDel) {
     card.links.splice(+linkDel.dataset.link, 1);
     // the last link of a note without text: nothing is left of the note
-    if (isEmptyNote(card)) col.cards = col.cards.filter(c => c !== card);
+    if (isEmptyCard(card)) col.cards = col.cards.filter(c => c !== card);
     return update();
   }
   // linked pages and tasks open on their own and never open the card around them
@@ -184,7 +146,7 @@ $("bCols").addEventListener("dblclick", e => {
   if (e.target.closest("button, a, textarea, input")) return;
   if (e.target.closest(".col-name") && !columnsLocked()) return renameColumn(e.target.closest(".col"));
   const cardEl = e.target.closest(".card.own");
-  if (cardEl) editOwnTask(cardEl);
+  if (cardEl) editCardText(cardEl);
 });
 
 $("bCols").addEventListener("auxclick", e => {
