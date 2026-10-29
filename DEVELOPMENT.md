@@ -9,6 +9,7 @@ A Chrome MV3 extension that replaces the new tab page. No build step: plain HTML
 - `_locales/` – the extension name and description for the Chrome Web Store and chrome://extensions.
 - `tools/make_icons.py` – generates `icons/`; `tools/render_mermaid.cjs` – renders the diagram in `docs/` to SVG.
 - `tests/` – browser tests (see Testing).
+- `docs/work-log.md` – what was built and why, and the open items.
 - `docs/board-states.md` – board card kinds and what each button does to them (Mermaid source); `docs/board-states.svg` is the same picture rendered. Update both when card behavior changes.
 
 Styles, in cascade order (later files win on equal specificity):
