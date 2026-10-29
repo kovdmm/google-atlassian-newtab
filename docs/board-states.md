@@ -27,8 +27,8 @@ stateDiagram-v2
   Inbox --> PR : drag a PR notification to a column
   Inbox --> Txt : drag any other notification<br/>(its page is linked)
 
-  Jira --> Jira : "Add description", ⋮ → "Edit description"
-  PR --> PR : "Add description", ⋮ → "Edit description"
+  Jira --> Jira : "Add description", ⋮ → "Edit description",<br/>double click on the description
+  PR --> PR : "Add description", ⋮ → "Edit description",<br/>double click on the description
   Txt --> Txt : ⋮ → "Edit note", double click
 
   Txt --> [*] : text erased or × on the last link,<br/>when neither text nor links are left
@@ -38,6 +38,7 @@ stateDiagram-v2
 
 - ⋮ → "Remove from the board" removes a card of any kind; it is left out of the picture to keep it readable. So are "Add link", × on a link and "Deadline…" – every card has them, and they never change its kind.
 - Editing text only changes the text. An empty description is just no description; a Jira or PR card stays.
+- A description is shown on top of a Jira or PR card, above the task summary or PR title. A click on it doesn't open the task or PR – a double click edits it.
 - A note whose text is nothing but a link – typed in "+ Note" or left after editing – keeps it as a link, not as text: a note without text with that link (a task link or key becomes a linked task). A link that is already on the note isn't added twice. In "+ Note" a task or PR link still makes its card.
 - A note goes when nothing is left of it: no text and no links. The deadline doesn't keep an empty note.
 - "+ Note" makes a Jira or PR card only when the text is nothing but a task key or link, or a PR link. A task or PR that is already a card on the board is never made into a second card: "+ Note" and Inbox flash the existing card instead, "+ Link" shows it as "on the board" and doesn't let you pick it.

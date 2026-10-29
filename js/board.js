@@ -357,7 +357,7 @@ function taskAttachmentHtml(key, i, close) {
       </div>`;
 }
 
-// The user's text on a Jira or PR card, under the summary; "Add description" next to ⋮ while there is none
+// The user's text on a Jira or PR card, above the summary; "Add description" next to ⋮ while there is none
 const textHtml = card => (card.text ? `<div class="card-text">${esc(card.text)}</div>` : "");
 const descButtonHtml = card => (card.text ? "" :
   `<button type="button" class="card-desc" title="${esc(t("boardAddDescription"))}" aria-label="${esc(t("boardAddDescription"))}">${BOARD_ICONS.addNote}</button>`);
@@ -373,7 +373,7 @@ function cardHtml(card, columnId, columnType) {
         ? `<div class="card-top"><span class="card-key">${esc(card.key)}</span>${status}` +
           // in the top row, next to ⋮: appears on hover and takes no extra height
           `${descButtonHtml(card)}${menuBtn}</div>
-      <div class="card-title">${esc(issue?.summary || card.summary || "")}</div>${textHtml(card)}`
+      ${textHtml(card)}<div class="card-title">${esc(issue?.summary || card.summary || "")}</div>`
         : `<div class="note">${menuBtn}<div class="card-title card-text">${esc(card.text || "")}</div></div>`}
       ${attachmentsHtml(card)}
       ${dueRowHtml(card, columnType)}
@@ -387,7 +387,7 @@ function prCardHtml(card, columnId, columnType, menuBtn) {
   return `
     <div class="card pr-card" draggable="true" data-card="${esc(cardId(card))}" data-col="${columnId}">
       <div class="card-top"><span class="pr-icon">${BOARD_ICONS.pr}</span><span class="card-key">${esc(repo)} #${esc(id)}</span>${badge}${descButtonHtml(card)}${menuBtn}</div>
-      <div class="card-title">${esc(prOf(card.pr)?.title || card.title || "")}</div>${textHtml(card)}
+      ${textHtml(card)}<div class="card-title">${esc(prOf(card.pr)?.title || card.title || "")}</div>
       ${attachmentsHtml(card)}
       ${dueRowHtml(card, columnType)}
     </div>`;

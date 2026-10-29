@@ -65,10 +65,10 @@ function editCardText(cardEl) {
   const placeholder = card.key || card.pr ? t("boardDescPlaceholder", cardName(card)) : "";
   const input = Object.assign(document.createElement("textarea"),
     { className: "card-edit", value: card.text || "", rows: 3, maxLength: 500, placeholder });
-  // a note always has its text block; a Jira or PR card gets the box under its summary
+  // a note always has its text block; a Jira or PR card gets the box above its summary
   const textEl = cardEl.querySelector(".card-text");
   if (textEl) textEl.replaceWith(input);
-  else cardEl.querySelector(".card-title").after(input);
+  else cardEl.querySelector(".card-top").after(input);
   cardEl.draggable = false;
   input.focus();
   input.select();
@@ -137,8 +137,9 @@ $("bCols").addEventListener("click", e => {
     if (isEmptyCard(card)) col.cards = col.cards.filter(c => c !== card);
     return update();
   }
-  // linked pages and tasks open on their own and never open the card around them
-  if (e.target.closest(".card-links")) return;
+  // linked pages and tasks open on their own and never open the card around them;
+  // the card's own text is for a double click (edit), it doesn't open the card either
+  if (e.target.closest(".card-links, .card-text")) return;
   const url = cardUrl(card);
   if (url) openUrl(url, e.ctrlKey || e.metaKey);
 });
@@ -154,7 +155,8 @@ $("bCols").addEventListener("keydown", e => {
 $("bCols").addEventListener("dblclick", e => {
   if (e.target.closest("button, a, textarea, input")) return;
   if (e.target.closest(".col-name") && !columnsLocked()) return renameColumn(e.target.closest(".col"));
-  const cardEl = e.target.closest(".card.own");
+  // a note – anywhere on it; a Jira or PR card – on its description
+  const cardEl = e.target.closest(".card.own") || e.target.closest(".card-text")?.closest(".card");
   if (cardEl) editCardText(cardEl);
 });
 
@@ -162,7 +164,7 @@ $("bCols").addEventListener("auxclick", e => {
   if (e.button !== 1) return;
   const cardEl = e.target.closest(".card:not(.inbox-item)");
   // a linked page keeps the browser's own middle click (opens just the page)
-  if (!cardEl || e.target.closest(".card-links, button")) return;
+  if (!cardEl || e.target.closest(".card-links, .card-text, button")) return;
   const url = cardUrl(findCard(columnOf(cardEl.dataset.col), cardEl.dataset.card));
   if (!url) return;
   e.preventDefault();
