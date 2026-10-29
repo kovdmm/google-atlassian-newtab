@@ -7,7 +7,8 @@ A Chrome MV3 extension that replaces the new tab page. No build step: plain HTML
 - `manifest.json`, `background.js` – the extension itself; the service worker only opens a new tab after the first install.
 - `newtab.html` – the page markup, all dialogs included.
 - `_locales/` – the extension name and description for the Chrome Web Store and chrome://extensions.
-- `tools/make_icons.py` – generates `icons/`.
+- `tools/make_icons.py` – generates `icons/`; `tools/render_mermaid.cjs` – renders the diagram in `docs/` to SVG.
+- `tests/` – browser tests (see Testing).
 - `docs/board-states.md` – board card kinds and what each button does to them (Mermaid source); `docs/board-states.svg` is the same picture rendered. Update both when card behavior changes.
 
 Styles, in cascade order (later files win on equal specificity):
@@ -40,4 +41,9 @@ Scripts are plain scripts that share one global scope. `newtab.html` loads them 
 
 ## Testing
 
-There are no automated tests in this folder. Changes were checked in headless Chrome with playwright-core. The test opens `newtab.html` as a file and stubs `chrome.*` and `fetch` with `addInitScript`, so no real Atlassian site or signed-in profile is involved.
+The tests in `tests/` run the page in headless Chrome with playwright-core. Each test opens `newtab.html` as a file and stubs `chrome.*` and `fetch` with `addInitScript`, so no real Atlassian site or signed-in profile is involved.
+
+- Run one from the project folder: `node tests/cards.cjs`. It prints what it found as JSON; `errors` lists page errors and should be empty.
+- `tests/pw.cjs` finds playwright-core: `PLAYWRIGHT_CORE`, a global install, or the npx cache (`npx playwright --version` fills it). It is never installed into the project – `node_modules` in an unpacked extension breaks loading it.
+- Screenshots and other output go to `tests/out/`, which git ignores.
+- Playwright emulates drag and drop without Chrome's own drag image, so how a drag looks is checked by hand.
