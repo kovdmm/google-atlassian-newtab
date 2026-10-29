@@ -102,6 +102,7 @@
       <button type="button" role="tab" class="tab" data-tab="general" data-i18n="tabGeneral">General</button>
       <button type="button" role="tab" class="tab" data-tab="board" data-i18n="tabBoard">Board</button>
       <button type="button" role="tab" class="tab" data-tab="atlassian" data-i18n="tabAtlassian">Atlassian</button>
+      <button type="button" role="tab" class="tab" data-tab="data" data-i18n="tabData">Data</button>
     </div>
 
     <div class="body">
@@ -313,6 +314,24 @@
         </section>
 
       </div>
+
+      <!-- ===== Data: everything at once ===== -->
+      <div class="panel" data-tab="data" hidden>
+
+        <section>
+          <div class="sec-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6.99 11 3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+            <span data-i18n="dataTransfer">All data</span>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn tonal" id="sDataImport" data-i18n="shortcutsImport">Import</button>
+            <button type="button" class="btn tonal" id="sDataExport" data-i18n="shortcutsExport">Export</button>
+            <input type="file" id="sDataFile" accept=".json,application/json" hidden>
+          </div>
+          <div class="help" id="sDataMsg" data-i18n="dataTransferHint"></div>
+        </section>
+
+      </div>
     </div>
 
     <div class="actions">
@@ -394,6 +413,7 @@
 <script src="js/board-inbox.js"></script>
 <script src="js/board-pickers.js"></script>
 <script src="js/board-backup.js"></script>
+<script src="js/backup.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

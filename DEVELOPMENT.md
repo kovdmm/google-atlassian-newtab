@@ -27,6 +27,7 @@ Scripts are plain scripts that share one global scope. `newtab.html` loads them 
 - `js/search.js` – the search box and its dropdown.
 - `js/settings.js` – `applySettings()` and the settings dialog.
 - `js/board.js` – the board model, card constructors, rendering, menus, deadlines; the header comment lists the other `board-*.js` files.
+- `js/backup.js` – settings → Data: all data exported or imported in one file.
 - `js/main.js` – startup; loaded last.
 
 ## Conventions
