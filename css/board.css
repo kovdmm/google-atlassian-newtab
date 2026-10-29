@@ -218,6 +218,17 @@
   display: none;
 }
 
+/* the drag image Chrome is given instead of its own faded copy of the card (see startGhost) */
+.drag-blank {
+  position: fixed;
+  top: 0;
+  left: -10px;
+  width: 1px;
+  height: 1px;
+  background: rgba(0, 0, 0, .01);
+  pointer-events: none;
+}
+
 /* the card in the hand while it is dragged: the card itself, lifted a little, under the pointer */
 .drag-ghost {
   position: fixed;

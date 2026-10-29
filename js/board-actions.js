@@ -185,8 +185,11 @@ let dragColumn = null; // column id while a column is dragged by its header
 const placeholder = Object.assign(document.createElement("div"), { className: "card-ph" });
 
 // The dragged card follows the pointer as itself, not as Chrome's faded drag image: the native image is swapped
-// for an empty one, and a copy of the card moves with the pointer (dragover anywhere on the page reports where it is)
-const EMPTY_DRAG_IMAGE = Object.assign(new Image(), { src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" });
+// for a blank one, and a copy of the card moves with the pointer (dragover anywhere on the page reports where it is).
+// The blank is a 1px element on the page, not quite transparent: Chrome on Windows ignores a fully transparent
+// drag image and shows its own
+const BLANK_DRAG_IMAGE = Object.assign(document.createElement("div"), { className: "drag-blank" });
+document.body.append(BLANK_DRAG_IMAGE);
 let dragGhost = null, ghostGrab = null;
 
 function startGhost(cardEl, e) {
@@ -196,7 +199,7 @@ function startGhost(cardEl, e) {
   dragGhost.classList.add("drag-ghost");
   Object.assign(dragGhost.style, { width: r.width + "px", left: r.left + "px", top: r.top + "px" });
   $("board").append(dragGhost);
-  e.dataTransfer.setDragImage(EMPTY_DRAG_IMAGE, 0, 0);
+  e.dataTransfer.setDragImage(BLANK_DRAG_IMAGE, 0, 0);
 }
 
 document.addEventListener("dragover", e => {
