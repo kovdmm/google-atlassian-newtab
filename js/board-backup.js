@@ -64,7 +64,7 @@ $("sBoardFile").onchange = async e => {
       !(await confirmDialog(t("boardImportTitle"), t("boardImportText", countCards(current)), t("boardImportOk")))) return;
   board = imported;
   migrateBoard();
-  await saveBoard();
+  await saveBoard({ replace: true });
   if (settings.board) {
     renderBoard();
     refreshCardStatuses();

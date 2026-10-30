@@ -11,6 +11,7 @@
 //   board-inbox.js    – the Inbox column (Atlassian notifications)
 //   board-pickers.js  – the link dialog: "Add link" on a card and "+ Link" under a column
 //   board-backup.js   – export / import of the whole board (settings → Board)
+// Saving the board (saveBoard) and picking up changes from other tabs live in sync.js
 
 // board = { expanded, columns: [{ id, name, type, cards: [card] }] }
 // type – what the column means: hold | todo | progress | done (drives how deadlines look)
@@ -72,7 +73,6 @@ function guessColumnType(name) {
   return "todo";
 }
 
-const saveBoard = () => store.set("board", board);
 // locked columns (settings → Board): no "+ Add column", no column menu, no renaming or reordering – cards still move
 const columnsLocked = () => Boolean(settings.boardLock);
 const columnOf = id => board.columns.find(c => c.id === id);
@@ -159,7 +159,11 @@ async function applyBoard() {
   const on = Boolean(settings.board);
   $("board").hidden = !on;
   if (!on) return;
-  board ??= await store.get("board", null) || defaultBoard();
+  if (!board) {
+    const saved = await store.get("board", null);
+    board = saved || defaultBoard();
+    boardBase = clone(saved); // saves merge with what other tabs saved since (sync.js)
+  }
   board.columns.forEach(col => { col.type ??= guessColumnType(col.name); });
   if (migrateBoard()) saveBoard();
   await restoreIssues();

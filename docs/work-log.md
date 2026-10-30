@@ -42,6 +42,7 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 - Inbox column: Atlassian notifications (the same as the bell in Jira and Confluence), filtered in the settings. × marks a notification as read; dragging one to a column makes it a card and marks it as read too.
 - Dragging a card shows the card itself under the pointer rather than Chrome's faded copy.
 - Board export and import (settings → Board).
+- Several open tabs stay in sync: a change in one tab shows up in the others at once (after an edit in progress there is finished), and saves merge – a column, a card's place and a card's content each keep the latest change made to them – instead of one tab overwriting another.
 
 ### Settings
 
@@ -91,6 +92,11 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 - The description on top of a Jira or PR card like a note's text, edited with a double click; the card itself is dragged instead of Chrome's faded copy.
 - The project moved to `C:\Projects\jumpstart` with its tests; settings → Data for moving all data at once; the data was moved to the new copy, the old folder deleted, and the work branch merged into `main`.
 
+### 2026-10-30 – several tabs
+
+- Dropping an Inbox item into a column left the dragged copy on the page: the item leaves the page on the drop, so its dragend never came. The drop now ends the drag itself.
+- Tabs overwrote each other's board, settings and shortcuts. Each tab now picks up changes from the others, and the board and the settings are saved with a three-way merge (`js/sync.js`).
+
 ## Key decisions
 
 - No build step and no dependencies in the extension folder: plain scripts load in a fixed order, and `node_modules` would break loading an unpacked extension. The tests take playwright-core from outside the project.
@@ -101,7 +107,7 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 
 ## Testing
 
-- Browser tests in `tests/` run the page in headless Chrome with `chrome.*` and `fetch` stubbed: smoke (search, settings, shortcuts), the card model and migration, "+ Link", notes that are only a link, descriptions, drag and drop, all-data export and import. Run one with `node tests/<name>.cjs`.
+- Browser tests in `tests/` run the page in headless Chrome with `chrome.*` and `fetch` stubbed: smoke (search, settings, shortcuts), the card model and migration, "+ Link", notes that are only a link, descriptions, drag and drop, all-data export and import, two tabs on one storage. Run one with `node tests/<name>.cjs`.
 - The tests print what they found as JSON rather than asserting; a run is read by eye, with `errors` expected to be empty.
 - Nothing is tested against a real Atlassian site; that was checked by hand in Chrome.
 

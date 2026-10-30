@@ -3,6 +3,7 @@
 
 (async () => {
   settings = { ...DEFAULT_SETTINGS, ...(await store.get("settings", {})) };
+  settingsBase = clone(settings);
   await loadLinks();
   await restoreSessionCaches();
   await applySettings();

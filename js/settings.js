@@ -411,7 +411,7 @@ $("setForm").onsubmit = async e => {
     focusSources: readSourceChecks("focusSrc"),
     sources: readSourceChecks("typeSrc"),
   };
-  await store.set("settings", settings);
+  await saveSettings();
   await applySettings();
   $("setDlg").close();
 };
