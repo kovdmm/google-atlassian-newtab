@@ -199,20 +199,39 @@ function inboxClick(e) {
   // a click on the item itself is a plain link: Ctrl/middle click open it in a background tab natively
 }
 
+// What the notification said and when – who did what: "Jane Doe commented on the page – 30 Oct, 14:05"
+function inboxLine(item) {
+  const when = item.ts && new Date(item.ts).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return [item.message || item.title, when].filter(Boolean).join(" – ");
+}
+
+// The card a notification adds to, if there is one: the PR's or the task's card, or a note linking the same page
+function inboxTarget(ref, key, url) {
+  const cards = board.columns.flatMap(c => c.cards);
+  if (ref) return cards.find(c => c.pr === ref);
+  if (key) return cards.find(c => c.key === key);
+  return cards.find(c => !c.key && !c.pr && (c.links || []).some(l => l.url === url));
+}
+
 // Dropped on a column: a pull request notification becomes the PR card, a Jira one – the task's card,
-// anything else – a note with the page linked. Already on the board – the card is shown instead
+// anything else – a note with the page linked. The card's text keeps what the notification said and when, a line
+// each; a card already on the board (also a note on the same page) gets the line added instead of a new card
 function inboxToCard(id, col, index) {
   const item = (inboxItems || []).find(x => x.id === id);
   if (!item || !col) return;
-  const url = item.entityUrl || item.url, title = item.title || item.message;
+  const url = item.entityUrl || item.url, title = item.title || item.message, line = inboxLine(item);
   const ref = prRefOf(item.entityUrl) || prRefOf(item.url);
   const key = !ref && (taskOfUrl(item.entityUrl) || taskOfUrl(item.url));
   hideInboxItem(id);
-  if (ref && prCardsOnBoard().has(ref)) return flashCard(prCardId(ref));
-  if (key && cardsOnBoard().has(key)) return flashCard(key);
-  const card = ref ? prCard(ref, url, item.title)
-    : key ? { ...jiraCard(key), summary: issueOf(key)?.summary || item.title }
-    : noteCard(title, { links: [{ title, url }] });
+  const existing = inboxTarget(ref, key, url);
+  if (existing) {
+    if (!(existing.text || "").split("\n").includes(line)) existing.text = existing.text ? existing.text + "\n" + line : line;
+    update();
+    return flashCard(cardId(existing));
+  }
+  const card = ref ? prCard(ref, url, item.title, "", { text: line })
+    : key ? { ...jiraCard(key, { text: line }), summary: issueOf(key)?.summary || item.title }
+    : noteCard(line, { links: [{ title, url }] });
   col.cards.splice(Math.max(0, index), 0, card);
   update();
   refreshFor(card);

@@ -39,7 +39,7 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 - Cards open like links: a click opens the task or PR in a new tab, a middle click or Ctrl+click in a background tab; a click on a linked page opens only the page.
 - Deadlines with Today / Tomorrow / In a week, colored by how close the date is and by the column type.
 - Statuses and titles are cached, so a reload draws the board as it was, without blinking.
-- Inbox column: Atlassian notifications (the same as the bell in Jira and Confluence), filtered in the settings. × marks a notification as read; dragging one to a column makes it a card and marks it as read too.
+- Inbox column: Atlassian notifications (the same as the bell in Jira and Confluence), filtered in the settings. × marks a notification as read; dragging one to a column makes it a card and marks it as read too. The card's text keeps what the notification said and when ("Jane Doe commented on SF-1 – Oct 30, 15:15"), a line per notification; a card already on the board – the task, the PR or a note on the same page – gets the line added instead of a new card.
 - Dragging a card shows the card itself under the pointer rather than Chrome's faded copy.
 - Board export and import (settings → Board).
 - Several open tabs stay in sync: a change in one tab shows up in the others at once (after an edit in progress there is finished), and saves merge – a column, a card's place and a card's content each keep the latest change made to them – instead of one tab overwriting another.
@@ -96,6 +96,7 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 
 - Dropping an Inbox item into a column left the dragged copy on the page: the item leaves the page on the drop, so its dragend never came. The drop now ends the drag itself.
 - Tabs overwrote each other's board, settings and shortcuts. Each tab now picks up changes from the others, and the board and the settings are saved with a three-way merge (`js/sync.js`).
+- A notification dropped on the board kept only the page title, so who did what and when was lost – and the same page came up again and again. The card's text now keeps the notification message and time, and later notifications about the same task, PR or page add a line to the card already there.
 
 ## Key decisions
 
@@ -107,7 +108,7 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 
 ## Testing
 
-- Browser tests in `tests/` run the page in headless Chrome with `chrome.*` and `fetch` stubbed: smoke (search, settings, shortcuts), the card model and migration, "+ Link", notes that are only a link, descriptions, drag and drop, all-data export and import, two tabs on one storage. Run one with `node tests/<name>.cjs`.
+- Browser tests in `tests/` run the page in headless Chrome with `chrome.*` and `fetch` stubbed: smoke (search, settings, shortcuts), the card model and migration, "+ Link", notes that are only a link, descriptions, drag and drop, all-data export and import, two tabs on one storage, Inbox notifications turned into cards. Run one with `node tests/<name>.cjs`.
 - The tests print what they found as JSON rather than asserting; a run is read by eye, with `errors` expected to be empty.
 - Nothing is tested against a real Atlassian site; that was checked by hand in Chrome.
 
