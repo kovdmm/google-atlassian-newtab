@@ -264,7 +264,10 @@ $("bCols").addEventListener("drop", e => {
   if (dragCard?.inbox && placeholder.parentNode) {
     const to = columnOf(placeholder.parentNode.dataset.col);
     const index = [...placeholder.parentNode.children].filter(el => !el.classList.contains("col-empty")).indexOf(placeholder);
-    inboxToCard(dragCard.inbox, to, index);
+    const id = dragCard.inbox;
+    // the inbox item leaves the page on the drop, so its dragend never reaches #bCols: end the drag here
+    endDrag();
+    inboxToCard(id, to, index);
     return;
   }
   if (dragCard && placeholder.parentNode) {
@@ -283,9 +286,11 @@ $("bCols").addEventListener("drop", e => {
   saveBoard();
 });
 
-$("bCols").addEventListener("dragend", () => {
+function endDrag() {
   stopGhost();
   dragCard = dragColumn = null;
   placeholder.remove();
   renderBoard();
-});
+}
+
+$("bCols").addEventListener("dragend", endDrag);

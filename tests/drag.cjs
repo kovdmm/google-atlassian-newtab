@@ -8,7 +8,7 @@ const dir = arg && arg !== "-" ? arg : EXT;
   const p = await (await browser.newContext({ viewport: { width: 1400, height: 1400 }, deviceScaleFactor: 2 })).newPage();
   await p.addInitScript(noperm => {
     const J = "https://example.atlassian.net";
-    const mem = { onboarded: true, links: [], settings: { jiraUrl: J, projectKey: "SF", lang: "en", board: true,  bbWorkspace: "acme", bbRepos: ["repo"] },
+    const mem = { onboarded: true, links: [], settings: { jiraUrl: J, projectKey: "SF", lang: "en", board: true, inbox: { on: true }, bbWorkspace: "acme", bbRepos: ["repo"] },
       board: { expanded: false, columns: [{ id: "a", name: "To do", type: "todo", cards: [{ key: "SF-1", summary: "One", text: "Ask about the release date", links: [] },
       { key: "SF-2", summary: "Two", links: [] },
       { key: "SF-3", summary: "Three", text: "Check with QA and update the ticket", links: [{ title: "Release notes", url: "https://example.atlassian.net/wiki/spaces/S/pages/11/Release+notes" }], due: "2026-11-02" },
@@ -28,7 +28,10 @@ const dir = arg && arg !== "-" ? arg : EXT;
       declarativeNetRequest: { updateSessionRules: async () => {} }, tabs: { create() {} } };
     window.fetch = async url => {
       const u = new URL(url);
-      if (u.pathname.endsWith("/graphql")) return new Response(JSON.stringify({ data: { notifications: { notificationFeed: { nodes: [] } } } }));
+      if (u.pathname.endsWith("/graphql")) return new Response(JSON.stringify({ data: { notifications: { notificationFeed: { nodes: [{ headNotification: {
+        notificationId: "n1", timestamp: "2026-10-30T09:00:00Z", readState: "unread", category: "direct",
+        content: { type: "assigned", message: "assigned you", url: J + "/browse/SF-9", entity: { title: "Nine", url: J + "/browse/SF-9" } },
+        analyticsAttributes: [{ key: "registrationProduct", value: "jira" }] } }] } } } }));
       if (u.hostname === "bitbucket.org") return new Response(JSON.stringify({ title: "PR seven", state: "OPEN" }));
       if (u.pathname.includes("/search/jql")) return new Response(JSON.stringify({ issues: ["SF-1", "SF-2", "SF-3"].map(key => ({ key, fields: { summary: "Mine " + key, status: { name: "To Do", statusCategory: { key: "new" } } } })), isLast: true }));
       if (u.pathname.includes("/wiki/rest/api/search")) return new Response(JSON.stringify({ results: [] }));
@@ -49,6 +52,20 @@ const dir = arg && arg !== "-" ? arg : EXT;
   await p.screenshot({ path: require("path").join(OUT, "drag.png"), clip: { x: 0, y: 200, width: 1100, height: 700 } });
   await p.mouse.up(); await p.waitForTimeout(300);
   r.ghostAfter = await p.$$eval(".drag-ghost", e => e.length);
+
+  // from the Inbox: the item leaves the page on the drop, the copy under the pointer must go with it
+  const item = await p.waitForSelector(".inbox-item", { timeout: 3000 }).catch(() => null);
+  r.inboxItem = Boolean(item);
+  if (item) {
+    const ib = await item.boundingBox();
+    await p.mouse.move(ib.x + 40, ib.y + 15); await p.mouse.down();
+    await p.mouse.move(ib.x + 60, ib.y + 25, { steps: 3 });
+    await p.mouse.move(dst.x + dst.width / 2, dst.y + 20, { steps: 12 }); await p.waitForTimeout(200);
+    r.inboxGhostWhileDragging = await p.$$eval(".drag-ghost", e => e.length);
+    await p.mouse.up(); await p.waitForTimeout(300);
+    r.inboxGhostAfter = await p.$$eval(".drag-ghost", e => e.length);
+    r.placeholderAfter = await p.$$eval(".card-ph", e => e.length);
+  }
   r.columns = await p.evaluate(() => window.__mem.board.columns.map(c => c.name + ": " + c.cards.map(x => x.key || x.id).join(",")));
   console.log(JSON.stringify({ errors, r }, null, 1));
   await browser.close();
