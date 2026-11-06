@@ -190,6 +190,10 @@ async function build() {
   const acts = [];
   if (url) acts.push({ text: q, hint: t("openSite"), icon: "link", run: () => go("open", withScheme(q)) });
   if (key) acts.push({ key, text: key, hint: t("openTask"), icon: "task", run: () => go("task", key) });
+  // digits alone need the project key: say so instead of silently showing only history
+  if (hasJira() && /^\d+$/.test(q) && !settings.projectKey) {
+    acts.push({ text: t("projectKeyNeeded", q), hint: t("projectKeyNeededHint"), icon: "task", run: () => openSettings() });
+  }
   if (q) {
     // the main action follows the AI Mode setting; the other one stays in the list and is on Alt/Option+Enter
     const ai = { text: q, hint: t("aiMode") + (settings.aiSearch ? "" : ` (${KEY_ALT}+Enter)`), icon: "spark", run: () => go("ai", q) };
