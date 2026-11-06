@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
   bg: "",               // "" – light/dark by Chrome mode
   shortcuts: true,      // the row of shortcuts under the search box
   compact: false,       // compact view: a small logo and the search box in the top bar, no shortcuts
+  aiSearch: false,      // Google AI Mode is the main search action (off: plain Google Search; AI Mode stays in the list)
   board: false,         // kanban board in the bottom half of the page (board*.js)
   boardLock: false,     // columns locked: no adding, renaming, retyping, deleting or reordering
   // "Inbox" column of the board: Atlassian notifications (the bell) – which kinds get in
@@ -49,6 +50,11 @@ const jiraBase = () => jiraOrigin() + "/browse/";
 // =====================================================================================
 
 const $ = id => document.getElementById(id);
+
+// Names of the keys in hints: macOS has Option and Command where Windows has Alt and Ctrl
+const IS_MAC = /Mac/i.test(navigator.userAgentData?.platform || navigator.platform || "");
+const KEY_ALT = IS_MAC ? "⌥" : "Alt";
+const KEY_CTRL = IS_MAC ? "⌘" : "Ctrl";
 
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -118,8 +124,7 @@ const urls = {
   ai: q => "https://www.google.com/search?udm=50&q=" + encodeURIComponent(q),
   jira: q => urls.jql(`text ~ "${q.replace(/"/g, '\\"')}" ORDER BY updated DESC`),
   jql: q => jiraOrigin() + "/issues/?jql=" + encodeURIComponent(q),
-  confluence: q => jiraApiOrigin() + "/wiki/search?text=" + encodeURIComponent(q),
-  bitbucket: q => `${BITBUCKET}/${encodeURIComponent(settings.bbWorkspace)}/workspace/repositories/?search=${encodeURIComponent(q)}`,
+  confluence: q => jiraApiOrigin() + "/wiki/search?text=" + encodeURIComponent(q),  bitbucket: q => `${BITBUCKET}/${encodeURIComponent(settings.bbWorkspace)}/workspace/repositories/?search=${encodeURIComponent(q)}`,
   task: key => jiraBase() + key,
 };
 

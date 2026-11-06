@@ -13,6 +13,11 @@ const I18N = {
     voice: "Search by voice",
     lens: "Search by image",
 
+    // Search
+    searchTitle: "Search",
+    aiSearchPrefer: "Prefer Google AI Mode",
+    aiSearchHint: "Off: Enter runs a plain Google search and AI Mode is the Alt+Enter option (Option+Enter on a Mac). On: the other way round. AI Mode can show a notice on every request, so it is off by default.",
+
     // Shortcuts
     addShortcut: "Add shortcut",
     editShortcut: "Edit shortcut",
@@ -23,8 +28,8 @@ const I18N = {
 
     // Dropdown
     aiMode: "Google AI Mode",
-    googleSearch: "Google Search (Alt+Enter)",
-    jiraSearch: "search in Jira (Ctrl+Enter)",
+    googleSearch: "Google Search",
+    jiraSearch: "search in Jira",
     confluenceSearch: "search in Confluence",
     bitbucketSearch: "search repositories in Bitbucket",
     openSite: "open site",
@@ -219,6 +224,11 @@ const I18N = {
     voice: "Голосовой поиск",
     lens: "Поиск по картинке",
 
+    // Search
+    searchTitle: "Поиск",
+    aiSearchPrefer: "Предпочитать Google AI Mode",
+    aiSearchHint: "Выключено: Enter запускает обычный поиск Google, а AI Mode – на Alt+Enter (Option+Enter на Mac). Включено – наоборот. AI Mode может показывать уведомление при каждом запросе, поэтому по умолчанию он выключен.",
+
     // Shortcuts
     addShortcut: "Добавить ярлык",
     editShortcut: "Изменить ярлык",
@@ -229,8 +239,8 @@ const I18N = {
 
     // Dropdown
     aiMode: "Google AI Mode",
-    googleSearch: "поиск Google (Alt+Enter)",
-    jiraSearch: "поиск в Jira (Ctrl+Enter)",
+    googleSearch: "поиск Google",
+    jiraSearch: "поиск в Jira",
     confluenceSearch: "поиск в Confluence",
     bitbucketSearch: "поиск репозиториев в Bitbucket",
     openSite: "открыть сайт",
@@ -425,6 +435,11 @@ const I18N = {
     voice: "Sprachsuche",
     lens: "Bildersuche",
 
+    // Search
+    searchTitle: "Suche",
+    aiSearchPrefer: "Google KI-Modus bevorzugen",
+    aiSearchHint: "Aus: Enter startet die normale Google-Suche, der KI-Modus liegt auf Alt+Enter (Option+Enter auf dem Mac). An: umgekehrt. Der KI-Modus kann bei jeder Anfrage einen Hinweis zeigen, deshalb ist er standardmäßig aus.",
+
     // Shortcuts
     addShortcut: "Verknüpfung hinzufügen",
     editShortcut: "Verknüpfung bearbeiten",
@@ -435,8 +450,8 @@ const I18N = {
 
     // Dropdown
     aiMode: "Google KI-Modus",
-    googleSearch: "Google-Suche (Alt+Enter)",
-    jiraSearch: "in Jira suchen (Ctrl+Enter)",
+    googleSearch: "Google-Suche",
+    jiraSearch: "in Jira suchen",
     confluenceSearch: "in Confluence suchen",
     bitbucketSearch: "Repositories in Bitbucket suchen",
     openSite: "Website öffnen",

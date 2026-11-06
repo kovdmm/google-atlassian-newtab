@@ -1,4 +1,4 @@
-// Search box: Google search (AI Mode by default) with Jira, Confluence and Bitbucket results
+// Search box: Google search (AI Mode if turned on in the settings) with Jira, Confluence and Bitbucket results
 // and browser history suggestions in one dropdown.
 
 // =====================================================================================
@@ -191,13 +191,17 @@ async function build() {
   if (url) acts.push({ text: q, hint: t("openSite"), icon: "link", run: () => go("open", withScheme(q)) });
   if (key) acts.push({ key, text: key, hint: t("openTask"), icon: "task", run: () => go("task", key) });
   if (q) {
-    acts.push({ text: q, hint: t("aiMode"), icon: "spark", run: () => go("ai", q) });
+    // the main action follows the AI Mode setting; the other one stays in the list and is on Alt/Option+Enter
+    const ai = { text: q, hint: t("aiMode") + (settings.aiSearch ? "" : ` (${KEY_ALT}+Enter)`), icon: "spark", run: () => go("ai", q) };
+    const google = { text: q, hint: t("googleSearch") + (settings.aiSearch ? ` (${KEY_ALT}+Enter)` : ""), run: () => go("google", q) };
+    if (settings.aiSearch) acts.push(ai);
+    else acts.push(google);
     if (hasJira()) {
-      acts.push({ text: q, hint: t("jiraSearch"), jiraAct: true, run: () => go("jira", q) });
+      acts.push({ text: q, hint: `${t("jiraSearch")} (${KEY_CTRL}+Enter)`, jiraAct: true, run: () => go("jira", q) });
       acts.push({ text: q, hint: t("confluenceSearch"), icon: "conf", run: () => go("confluence", q) });
     }
     if (hasBitbucket()) acts.push({ text: q, hint: t("bitbucketSearch"), icon: "bb", run: () => go("bitbucket", q) });
-    acts.push({ text: q, hint: t("googleSearch"), run: () => go("google", q) });
+    acts.push(settings.aiSearch ? google : ai);
   }
   items = [];
   active = 0;
@@ -360,8 +364,9 @@ $("q").addEventListener("keydown", e => {
     markActive();
   } else if (e.key === "Enter") {
     e.preventDefault();
-    if (e.altKey && q) return go("google", q);
-    if (e.ctrlKey && q && hasJira()) return jqlOf(q) ? go("jql", jqlOf(q)) : go("jira", q);
+    if (e.altKey && q) return go(settings.aiSearch ? "google" : "ai", q);
+    // Ctrl+Enter on Windows, Cmd+Enter on Mac
+    if ((e.ctrlKey || e.metaKey) && q && hasJira()) return jqlOf(q) ? go("jql", jqlOf(q)) : go("jira", q);
     items[active]?.run();
   } else if (e.key === "Escape") {
     closeDropdown();
@@ -391,7 +396,7 @@ $("micBtn").onclick = () => {
   rec.onresult = e => {
     const result = e.results[e.results.length - 1];
     $("q").value = result[0].transcript;
-    if (result.isFinal) go("ai", $("q").value.trim());
+    if (result.isFinal) go(settings.aiSearch ? "ai" : "google", $("q").value.trim());
   };
   rec.onend = rec.onerror = () => {
     listening = null;

@@ -291,7 +291,7 @@ $("sAtlFile").onchange = async e => {
 // ---- Open / fill / close ----
 
 // Plain on/off settings: checkbox id → settings field. A new one needs just a line here and the checkbox in newtab.html
-const CHECKBOXES = { sShortcuts: "shortcuts", sCompact: "compact", sBoard: "board", sBoardLock: "boardLock" };
+const CHECKBOXES = { sShortcuts: "shortcuts", sCompact: "compact", sBoard: "board", sBoardLock: "boardLock", sAiSearch: "aiSearch" };
 
 const readCheckboxes = () => Object.fromEntries(Object.entries(CHECKBOXES).map(([id, key]) => [key, $(id).checked]));
 const readInboxChecks = () =>
