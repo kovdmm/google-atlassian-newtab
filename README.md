@@ -20,7 +20,17 @@ Keep the folder where it is: Chrome reads the extension from it every time the b
 
 Your settings, shortcuts and board stay: they are stored in the browser, not in the folder. Keep the extension in the same folder – Chrome ties the saved data to its path, so a different folder counts as a new extension with empty data.
 
-If you installed with git, run `git pull` in the folder and go to step 4 below. Without git:
+#### With git
+
+If you cloned the repository, updating takes three steps:
+
+1. Open a terminal in the extension folder (in Windows Explorer: type `cmd` in the address bar and press Enter).
+2. Run `git pull`. It downloads the new version into the same folder. If git says that local changes would be overwritten, you edited a file in the folder: run `git stash` first, then `git pull` again (`git stash pop` brings your edits back).
+3. Open `chrome://extensions` and press the round **reload** arrow on the Jumpstart card, then open a new tab.
+
+To see what changed before updating, run `git fetch` and then `git log HEAD..origin/main --oneline`. To go back to an older version, run `git checkout <commit>` (and `git checkout main` to return to the latest one), then reload the extension.
+
+#### Without git
 
 1. Open the GitHub page of the project and press **Code → Download ZIP**.
 2. Unpack the ZIP anywhere (for example on the desktop).
