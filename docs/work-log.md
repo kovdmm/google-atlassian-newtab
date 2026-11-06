@@ -13,11 +13,11 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 
 - A new tab page that looks like Chrome's own: logo, search box, a row of shortcuts, the user's avatar (Gravatar by the e-mail in the settings) and a ⋮ settings button.
 - The Chrome theme and light/dark mode are followed; a custom background color can be picked in the settings.
-- Google AI Mode is the default search; plain Google search and search in Jira are in the dropdown. The search box doesn't take focus on its own when a tab opens.
+- Plain Google search is the main action; Google AI Mode is a setting ("Prefer Google AI Mode", off by default because AI Mode shows a notice on every request) and is on Alt+Enter while the setting is off. Key hints name only the keys of the system in use (Alt/Ctrl+Enter, or Option/Cmd+Return on a Mac). Search in Jira is in the dropdown too. The search box doesn't take focus on its own when a tab opens.
 - Voice input with a choice of language (Google's own microphone understood English only).
 - History Quick Search – on focus, the empty box shows recent pages from browser history: Jira tasks, Confluence pages, Bitbucket, previous Google searches and other sites, each kind switchable in the settings; duplicates are removed and the list scrolls.
 - Autocomplete Quick Search – while typing, suggestions come from Jira, Confluence, Bitbucket repositories, pull requests and history, mixed by relevance rather than grouped; each source is switchable.
-- A task number ("123", "sf123", "SF-123") opens the task; `jql: …` runs a JQL query.
+- A task number ("123", "sf123", "SF-123") opens the task (a bare number needs the project key in the settings; the dropdown says so when it is missing); `jql: …` runs a JQL query in Jira, `cql: …` a CQL query in Confluence.
 - Every Atlassian part is optional: nothing about Jira, Confluence or Bitbucket shows up until its address is set.
 
 ### Shortcuts
@@ -38,6 +38,8 @@ Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the n
 - Adding: "+ Note" (a task key or link, or a PR link, makes its card; a lone page link makes a note with just that link) and "+ Link" (one dialog for my Jira tasks, history, Confluence search and any pasted address; what is already on the board can't be picked twice).
 - Cards open like links: a click opens the task or PR in a new tab, a middle click or Ctrl+click in a background tab; a click on a linked page opens only the page.
 - Deadlines with Today / Tomorrow / In a week, colored by how close the date is and by the column type.
+- Columns: ⋮ → Clear column removes all cards (with a confirmation) and stays available when the columns are locked; Delete column removes the column. A card moved into a "done" column plays a small fireworks from the bottom corners.
+- Dragging works the same for cards in columns and in the Inbox: an empty slot of the card's size stays until the pointer is over a column, then it goes away; dropped nowhere, the card is back. The Inbox can't be reordered or dropped into.
 - Statuses and titles are cached, so a reload draws the board as it was, without blinking.
 - Inbox column: Atlassian notifications (the same as the bell in Jira and Confluence), filtered in the settings. × marks a notification as read; dragging one to a column makes it a card and marks it as read too. The card's text keeps what the notification said and when ("Jane Doe commented on SF-1 – Oct 30, 15:15"), a line per notification; a card already on the board – the task, the PR or a note on the same page – gets the line added instead of a new card.
 - Dragging a card shows the card itself under the pointer rather than Chrome's faded copy.
