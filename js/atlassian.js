@@ -200,9 +200,14 @@ async function myTasks() {
 // ---- Confluence (same Atlassian site as Jira) ---------------------------------------
 
 // Pages and blog posts via CQL siteSearch – the same search as in Confluence itself
-async function confluenceQuery(q, spaceKey, signal) {
+function confluenceQuery(q, spaceKey, signal) {
   const space = spaceKey ? ` and space = "${spaceKey}"` : "";
-  const cql = `siteSearch ~ "${cleanTerms(q)}" and type in (page, blogpost)${space}`;
+  return confluenceCql(`siteSearch ~ "${cleanTerms(q)}" and type in (page, blogpost)${space}`, signal, Boolean(spaceKey));
+}
+
+// A ready CQL query (also the user's own, typed after "cql:"): the found pages as dropdown items.
+// null – nothing was sent (limit); [] – Confluence didn't accept the query
+async function confluenceCql(cql, signal, priority = false) {
   const r = await apiFetch(`/wiki/rest/api/search?cql=${encodeURIComponent(cql)}&limit=${OTHER_SEARCH_LIMIT}`, signal);
   if (!r) return null;
   if (!r.ok) return [];
@@ -215,10 +220,15 @@ async function confluenceQuery(q, spaceKey, signal) {
       url,
       text: String(x.title || "").replace(/@@@(end)?hl@@@/g, ""), // Confluence marks matches as @@@hl@@@…@@@endhl@@@
       hint: x.resultGlobalContainer?.title || "Confluence",
-      priority: Boolean(spaceKey),
+      priority,
       run: () => go("newtab", url),
     };
   });
+}
+
+// Raw CQL search for the "cql:" mode, cached like other searches
+function confluenceCqlSearch(cql, signal) {
+  return cachedSearch(`cql:${cql.toLowerCase()}`, async () => ((await jiraReady()) ? confluenceCql(cql, signal) : null));
 }
 
 // With a priority space, one more query runs only in that space, so its pages are never pushed out by others

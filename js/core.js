@@ -124,7 +124,8 @@ const urls = {
   ai: q => "https://www.google.com/search?udm=50&q=" + encodeURIComponent(q),
   jira: q => urls.jql(`text ~ "${q.replace(/"/g, '\\"')}" ORDER BY updated DESC`),
   jql: q => jiraOrigin() + "/issues/?jql=" + encodeURIComponent(q),
-  confluence: q => jiraApiOrigin() + "/wiki/search?text=" + encodeURIComponent(q),  bitbucket: q => `${BITBUCKET}/${encodeURIComponent(settings.bbWorkspace)}/workspace/repositories/?search=${encodeURIComponent(q)}`,
+  confluence: q => jiraApiOrigin() + "/wiki/search?text=" + encodeURIComponent(q),
+  cql: q => jiraApiOrigin() + "/wiki/dosearchsite.action?cql=" + encodeURIComponent(q),  bitbucket: q => `${BITBUCKET}/${encodeURIComponent(settings.bbWorkspace)}/workspace/repositories/?search=${encodeURIComponent(q)}`,
   task: key => jiraBase() + key,
 };
 

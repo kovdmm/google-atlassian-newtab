@@ -7,6 +7,8 @@
 
 // "jql: summary ~ "Bridger"" – everything after the prefix goes to Jira as is
 const jqlOf = q => q.match(/^jql:\s*(.*)$/is)?.[1].trim() ?? null;
+// "cql: title ~ "Bridger" and space = SLAM" – the same for Confluence
+const cqlOf = q => q.match(/^cql:\s*(.*)$/is)?.[1].trim() ?? null;
 
 // Highlight the matched part (bold, like Chrome)
 function hl(text, q) {
@@ -184,6 +186,8 @@ async function build() {
 
   const jql = hasJira() ? jqlOf(q) : null;
   if (jql !== null) return buildJql(jql, my);
+  const cql = hasJira() ? cqlOf(q) : null;
+  if (cql !== null) return buildCql(cql, my);
 
   // actions
   const url = !key && looksLikeUrl(q);
@@ -270,6 +274,24 @@ function buildJql(jql, my) {
     const found = await jiraSearch(jql, true);
     if (my !== token) return;
     view.jira = jiraItems(found, () => go("jql", jql));
+    view.notice = jiraNotice();
+    compose();
+  }, 600);
+}
+
+// "cql:" mode – the same for Confluence: Enter opens the query in Confluence, found pages are listed below
+function buildCql(cql, my) {
+  items = [];
+  active = 0;
+  const acts = cql ? [{ text: cql, hint: t("openCql"), icon: "conf", run: () => go("cql", cql) }] : [];
+  view = { q: "", acts, hist: [], jira: [], other: [], notice: null };
+  compose();
+  if (cql.length < SEARCH_MIN) return;
+  searchTimer = setTimeout(async () => {
+    otherSearchCtrl = new AbortController();
+    const pages = await confluenceCqlSearch(cql, otherSearchCtrl.signal);
+    if (my !== token) return;
+    view.other = pages;
     view.notice = jiraNotice();
     compose();
   }, 600);
@@ -370,7 +392,10 @@ $("q").addEventListener("keydown", e => {
     e.preventDefault();
     if (e.altKey && q) return go(settings.aiSearch ? "google" : "ai", q);
     // Ctrl+Enter on Windows, Cmd+Enter on Mac
-    if ((e.ctrlKey || e.metaKey) && q && hasJira()) return jqlOf(q) ? go("jql", jqlOf(q)) : go("jira", q);
+    if ((e.ctrlKey || e.metaKey) && q && hasJira()) {
+      if (cqlOf(q) !== null) return go("cql", cqlOf(q));
+      return jqlOf(q) ? go("jql", jqlOf(q)) : go("jira", q);
+    }
     items[active]?.run();
   } else if (e.key === "Escape") {
     closeDropdown();
