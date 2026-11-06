@@ -229,6 +229,8 @@ $("bCols").addEventListener("dragstart", e => {
   if (cardEl?.classList.contains("inbox-item")) {
     dragCard = { inbox: cardEl.dataset.inbox };
     placeholder.style.height = cardEl.offsetHeight + "px";
+    // the item stays in the Inbox as an empty slot until it is dropped (the slot is not a second card)
+    requestAnimationFrame(() => cardEl.classList.add("dragging"));
   } else if (headEl && (headEl.closest(".col-inbox") || columnsLocked())) {
     return e.preventDefault();
   } else if (cardEl) {
@@ -278,8 +280,7 @@ $("bCols").addEventListener("drop", e => {
     const index = [...placeholder.parentNode.children]
       .filter(el => !el.classList.contains("dragging") && !el.classList.contains("col-empty")).indexOf(placeholder);
     from.cards = from.cards.filter(c => c !== card);
-    to.cards.splice(index, 0, card);
-  } else if (dragColumn) {
+    to.cards.splice(index, 0, card);  } else if (dragColumn) {
     const order = [...$("bCols").querySelectorAll(".col")].map(el => el.dataset.col);
     board.columns.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }

@@ -218,6 +218,23 @@
   display: none;
 }
 
+/* an Inbox item being dragged leaves an empty slot, not a second copy of itself */
+.card.inbox-item.dragging {
+  display: block;
+  background: var(--hover);
+  outline: 2px dashed var(--outline-var);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+.card.inbox-item.dragging > * {
+  visibility: hidden;
+}
+
+.card.inbox-item.dragging::after {
+  display: none;
+}
+
 /* the drag image Chrome is given instead of its own faded copy of the card (see startGhost) */
 .drag-blank {
   position: fixed;
