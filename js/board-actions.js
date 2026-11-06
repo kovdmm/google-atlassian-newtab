@@ -270,6 +270,7 @@ $("bCols").addEventListener("drop", e => {
     // the inbox item leaves the page on the drop, so its dragend never reaches #bCols: end the drag here
     endDrag();
     inboxToCard(id, to, index);
+    if (to.type === "done") launchFireworks();
     return;
   }
   if (dragCard && placeholder.parentNode) {
@@ -280,7 +281,8 @@ $("bCols").addEventListener("drop", e => {
     const index = [...placeholder.parentNode.children]
       .filter(el => !el.classList.contains("dragging") && !el.classList.contains("col-empty")).indexOf(placeholder);
     from.cards = from.cards.filter(c => c !== card);
-    to.cards.splice(index, 0, card);  } else if (dragColumn) {
+    to.cards.splice(index, 0, card);
+    if (to.type === "done" && to !== from) launchFireworks();  } else if (dragColumn) {
     const order = [...$("bCols").querySelectorAll(".col")].map(el => el.dataset.col);
     board.columns.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }
