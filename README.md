@@ -18,7 +18,17 @@ Keep the folder where it is: Chrome reads the extension from it every time the b
 
 ### Update
 
-Replace the files in the folder (or `git pull`), then press the reload button on the extension's card in `chrome://extensions`. Your settings, shortcuts and board stay: they are stored in the browser, not in the folder.
+Your settings, shortcuts and board stay: they are stored in the browser, not in the folder. Keep the extension in the same folder – Chrome ties the saved data to its path, so a different folder counts as a new extension with empty data.
+
+If you installed with git, run `git pull` in the folder and go to step 4 below. Without git:
+
+1. Open the GitHub page of the project and press **Code → Download ZIP**.
+2. Unpack the ZIP anywhere (for example on the desktop).
+3. Copy everything from the unpacked folder (the one with `manifest.json`) into your extension folder and agree to replace the files.
+4. Open `chrome://extensions` and press the round **reload** arrow on the Jumpstart card.
+5. Open a new tab. Done.
+
+To be safe, export your data before the first update: ⋮ → Settings → **Data** → export.
 
 ### Move to another computer
 

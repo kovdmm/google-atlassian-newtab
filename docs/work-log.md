@@ -2,7 +2,7 @@
 
 Status as of 2026-10-29. Jumpstart is a Chrome MV3 extension that replaces the new tab page: a Google-style page with search "enhanced with Atlassian", shortcuts and a kanban board for Jira tasks, pull requests and own notes. It was built in one long working session from 2026-10-21 to 2026-10-29.
 
-- Code: `C:\Projects\jumpstart`, git, one branch `main`, no remote.
+- Code: `C:\Projects\jumpstart`, git, one branch `main`, remote `https://github.com/kovdmm/google-atlassian-newtab.git`.
 - Loaded in Chrome as an unpacked extension from that folder (version 1.5.0 in `manifest.json`).
 - How the code is organized and how to run the tests: [DEVELOPMENT.md](../DEVELOPMENT.md).
 - Board card behavior: [board-states.md](board-states.md) and its picture [board-states.svg](board-states.svg).
