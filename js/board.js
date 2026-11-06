@@ -425,7 +425,7 @@ function columnHtml(col) {
         <span class="col-type col-type-${col.type}" title="${esc(t("boardType_" + col.type))}"></span>
         <span class="col-name">${esc(col.name)}</span>
         <span class="col-count">${col.cards.length}</span>
-        ${columnsLocked() ? "" : `<button type="button" class="menu-btn col-menu" title="${esc(t("boardMenu"))}" aria-label="${esc(t("boardMenu"))}">${BOARD_ICONS.more}</button>`}
+        ${columnsLocked() && !col.cards.length ? "" : `<button type="button" class="menu-btn col-menu" title="${esc(t("boardMenu"))}" aria-label="${esc(t("boardMenu"))}">${BOARD_ICONS.more}</button>`}
       </div>
       <div class="col-cards" data-col="${col.id}">${cards}</div>
       ${composer}${addButtons}
@@ -485,6 +485,9 @@ document.addEventListener("scroll", closeMenu, true);
 addEventListener("resize", closeMenu);
 
 function columnMenu(button, col) {
+  const clear = { icon: BOARD_ICONS.trash, label: t("boardClearColumn"), danger: true, run: () => clearColumn(col) };
+  // locked columns keep their names, types and order, but can still be emptied
+  if (columnsLocked()) return openMenu(button, [clear]);
   openMenu(button, [
     { icon: BOARD_ICONS.edit, label: t("boardRename"), run: () => renameColumn(button.closest(".col")) },
     { heading: t("boardColumnType") },
@@ -494,6 +497,7 @@ function columnMenu(button, col) {
       run: () => { col.type = type; update(); },
     })),
     { heading: "" },
+    ...(col.cards.length ? [clear] : []),
     { icon: BOARD_ICONS.trash, label: t("boardDeleteColumn"), danger: true, run: () => deleteColumn(col) },
   ]);
 }
@@ -542,6 +546,14 @@ function renameColumn(colEl, isNew = false) {
     if (e.key === "Escape") { e.stopPropagation(); finish(false); }
   });
   input.addEventListener("blur", () => finish(true));
+}
+
+// Removes every card, the column stays. Works on locked columns too
+async function clearColumn(col) {
+  if (!col.cards.length) return;
+  if (!(await confirmDialog(t("boardClearColumnTitle"), t("boardClearColumnText", col.name, col.cards.length), t("boardClearColumn")))) return;
+  col.cards = [];
+  update();
 }
 
 async function deleteColumn(col) {
