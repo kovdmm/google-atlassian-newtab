@@ -32,10 +32,10 @@ Settings → **Data** exports all settings, shortcuts and the board into one JSO
 
 ## Search
 
-- Enter runs a plain Google search. Settings → General → **Prefer Google AI Mode** makes AI Mode the main action instead; the other one is on Alt+Enter (Option+Enter on a Mac).
+- Enter runs a plain Google search. Settings → General → **Prefer Google AI Mode** makes AI Mode the main action instead; the other one is on Alt+Enter (Option+Return on a Mac).
 - A task number ("123", "sf123", "SF-123") opens the task; for a bare number set the **Project key** on the Atlassian tab.
 - `jql: …` runs a JQL query in Jira, `cql: …` a CQL query in Confluence (for example `cql: title ~ "release" and space = SLAM`): Enter opens the query on the site, the found tasks or pages are listed below.
-- Ctrl+Enter (Cmd+Enter on a Mac) searches Jira.
+- Ctrl+Enter (Cmd+Return on a Mac) searches Jira.
 
 ## For developers
 

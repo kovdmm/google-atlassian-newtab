@@ -51,10 +51,12 @@ const jiraBase = () => jiraOrigin() + "/browse/";
 
 const $ = id => document.getElementById(id);
 
-// Names of the keys in hints: macOS has Option and Command where Windows has Alt and Ctrl
+// Key hints name only the keys of the system in use: Option, Command and Return on a Mac; Alt, Ctrl and Enter elsewhere
 const IS_MAC = /Mac/i.test(navigator.userAgentData?.platform || navigator.platform || "");
-const KEY_ALT = IS_MAC ? "⌥" : "Alt";
-const KEY_CTRL = IS_MAC ? "⌘" : "Ctrl";
+const KEY_ENTER = IS_MAC ? "Return" : "Enter";
+const KEY_ALT = IS_MAC ? "Option" : "Alt";
+const KEY_CTRL = IS_MAC ? "Cmd" : "Ctrl";
+const keyHint = modifier => `${modifier}+${KEY_ENTER}`; // "Alt+Enter", "Cmd+Return"
 
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

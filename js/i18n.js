@@ -16,7 +16,7 @@ const I18N = {
     // Search
     searchTitle: "Search",
     aiSearchPrefer: "Prefer Google AI Mode",
-    aiSearchHint: "Off: Enter runs a plain Google search and AI Mode is the Alt+Enter option (Option+Enter on a Mac). On: the other way round. AI Mode can show a notice on every request, so it is off by default.",
+    aiSearchHint: "Off: {0} runs a plain Google search and AI Mode is on {1}. On: the other way round. AI Mode can show a notice on every request, so it is off by default.",
 
     // Shortcuts
     addShortcut: "Add shortcut",
@@ -230,7 +230,7 @@ const I18N = {
     // Search
     searchTitle: "Поиск",
     aiSearchPrefer: "Предпочитать Google AI Mode",
-    aiSearchHint: "Выключено: Enter запускает обычный поиск Google, а AI Mode – на Alt+Enter (Option+Enter на Mac). Включено – наоборот. AI Mode может показывать уведомление при каждом запросе, поэтому по умолчанию он выключен.",
+    aiSearchHint: "Выключено: {0} запускает обычный поиск Google, а AI Mode – на {1}. Включено – наоборот. AI Mode может показывать уведомление при каждом запросе, поэтому по умолчанию он выключен.",
 
     // Shortcuts
     addShortcut: "Добавить ярлык",
@@ -444,7 +444,7 @@ const I18N = {
     // Search
     searchTitle: "Пошук",
     aiSearchPrefer: "Надавати перевагу Google AI Mode",
-    aiSearchHint: "Вимкнено: Enter запускає звичайний пошук Google, а AI Mode – на Alt+Enter (Option+Enter на Mac). Увімкнено – навпаки. AI Mode може показувати сповіщення при кожному запиті, тому за замовчуванням він вимкнений.",
+    aiSearchHint: "Вимкнено: {0} запускає звичайний пошук Google, а AI Mode – на {1}. Увімкнено – навпаки. AI Mode може показувати сповіщення при кожному запиті, тому за замовчуванням він вимкнений.",
 
     // Shortcuts
     addShortcut: "Додати ярлик",
@@ -658,7 +658,7 @@ const I18N = {
     // Search
     searchTitle: "Suche",
     aiSearchPrefer: "Google KI-Modus bevorzugen",
-    aiSearchHint: "Aus: Enter startet die normale Google-Suche, der KI-Modus liegt auf Alt+Enter (Option+Enter auf dem Mac). An: umgekehrt. Der KI-Modus kann bei jeder Anfrage einen Hinweis zeigen, deshalb ist er standardmäßig aus.",
+    aiSearchHint: "Aus: {0} startet die normale Google-Suche, der KI-Modus liegt auf {1}. An: umgekehrt. Der KI-Modus kann bei jeder Anfrage einen Hinweis zeigen, deshalb ist er standardmäßig aus.",
 
     // Shortcuts
     addShortcut: "Verknüpfung hinzufügen",

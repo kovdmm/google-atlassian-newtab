@@ -129,10 +129,14 @@ function fillVoiceOptions(selected) {
   $("sVoice").value = selected || "";
 }
 
+// Hints that name keys: only the keys of this system (Alt+Enter here, Option+Return on a Mac)
+const fillPlatformHints = () => { $("aiSearchHint").textContent = t("aiSearchHint", KEY_ENTER, keyHint(KEY_ALT)); };
+
 $("sLang").addEventListener("change", () => {
   const value = $("sLang").value;
   lang = value !== "auto" && I18N[value] ? value : browserLang();
   applyI18n($("setDlg"));
+  fillPlatformHints();
   setDialogTitle();
   fillLangOptions(value);
   fillVoiceOptions($("sVoice").value);
@@ -303,6 +307,7 @@ function fillSettings(s) {
   fillAtlassianFields(s);
   fillLangOptions(s.lang);
   fillVoiceOptions(s.voiceLang);
+  fillPlatformHints();
   pickBg(s.bg || "");
 
   Object.entries(CHECKBOXES).forEach(([id, key]) => { $(id).checked = Boolean(s[key] ?? DEFAULT_SETTINGS[key]); });

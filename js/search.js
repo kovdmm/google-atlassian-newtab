@@ -199,13 +199,13 @@ async function build() {
     acts.push({ text: t("projectKeyNeeded", q), hint: t("projectKeyNeededHint"), icon: "task", run: () => openSettings() });
   }
   if (q) {
-    // the main action follows the AI Mode setting; the other one stays in the list and is on Alt/Option+Enter
-    const ai = { text: q, hint: t("aiMode") + (settings.aiSearch ? "" : ` (${KEY_ALT}+Enter)`), icon: "spark", run: () => go("ai", q) };
-    const google = { text: q, hint: t("googleSearch") + (settings.aiSearch ? ` (${KEY_ALT}+Enter)` : ""), run: () => go("google", q) };
+    // the main action follows the AI Mode setting; the other one stays in the list and is on Alt+Enter (Option+Return on a Mac)
+    const ai = { text: q, hint: t("aiMode") + (settings.aiSearch ? "" : ` (${keyHint(KEY_ALT)})`), icon: "spark", run: () => go("ai", q) };
+    const google = { text: q, hint: t("googleSearch") + (settings.aiSearch ? ` (${keyHint(KEY_ALT)})` : ""), run: () => go("google", q) };
     if (settings.aiSearch) acts.push(ai);
     else acts.push(google);
     if (hasJira()) {
-      acts.push({ text: q, hint: `${t("jiraSearch")} (${KEY_CTRL}+Enter)`, jiraAct: true, run: () => go("jira", q) });
+      acts.push({ text: q, hint: `${t("jiraSearch")} (${keyHint(KEY_CTRL)})`, jiraAct: true, run: () => go("jira", q) });
       acts.push({ text: q, hint: t("confluenceSearch"), icon: "conf", run: () => go("confluence", q) });
     }
     if (hasBitbucket()) acts.push({ text: q, hint: t("bitbucketSearch"), icon: "bb", run: () => go("bitbucket", q) });
