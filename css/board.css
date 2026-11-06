@@ -214,24 +214,22 @@
   outline-offset: -2px;
 }
 
+/* Every dragged card – from a column or from the Inbox – leaves an empty slot of its size, not a second copy of itself.
+   The slot goes away as soon as the drop placeholder shows the card where it would land (also in the same column);
+   if the card is dropped nowhere, the board is drawn again and the card is back */
 .card.dragging {
-  display: none;
-}
-
-/* an Inbox item being dragged leaves an empty slot, not a second copy of itself */
-.card.inbox-item.dragging {
-  display: block;
   background: var(--hover);
   outline: 2px dashed var(--outline-var);
   outline-offset: -2px;
   box-shadow: none;
 }
 
-.card.inbox-item.dragging > * {
+.card.dragging > *,
+.card.dragging::after {
   visibility: hidden;
 }
 
-.card.inbox-item.dragging::after {
+#bCols:has(.card-ph) .card.dragging {
   display: none;
 }
 
@@ -541,7 +539,8 @@ dialog.m3.pick .head {
    (removing it during dragover would cancel the drop). Also hidden while a new note is typed in the column */
 .col:has(.composer) .col-empty,
 .col-cards:has(.card:not(.dragging)) .col-empty,
-.col-cards:has(.card-ph) .col-empty {
+.col-cards:has(.card-ph) .col-empty,
+#bCols:not(:has(.card-ph)) .col-cards:has(.card.dragging) .col-empty { /* the slot of the dragged card is there */
   display: none;
 }
 
